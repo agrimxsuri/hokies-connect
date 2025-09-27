@@ -57,6 +57,31 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        'vt-maroon': {
+          DEFAULT: "hsl(var(--vt-maroon))",
+          light: "hsl(var(--vt-maroon-light))",
+        },
+        'vt-orange': {
+          DEFAULT: "hsl(var(--vt-orange))",
+          light: "hsl(var(--vt-orange-light))",
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        'subtle': 'var(--shadow-subtle)',
+        'card': 'var(--shadow-card)',
+        'elevated': 'var(--shadow-elevated)',
+      },
+      backgroundImage: {
+        'gradient-vt': 'var(--gradient-vt)',
+        'gradient-subtle': 'var(--gradient-subtle)',
+      },
+      transitionTimingFunction: {
+        'smooth': 'var(--transition-smooth)',
+        'bounce': 'var(--transition-bounce)',
       },
       borderRadius: {
         lg: "var(--radius)",
