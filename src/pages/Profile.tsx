@@ -125,12 +125,12 @@ const Profile = () => {
             </div>
             <div className="flex items-center space-x-2">
               <Button
-                onClick={() => navigate('/schedule')}
+                onClick={() => navigate('/alumni-requests')}
                 variant="outline"
                 size="sm"
               >
                 <Calendar className="h-4 w-4 mr-2" />
-                Schedule
+                Requests
               </Button>
               <Button
                 onClick={handleEditProfile}

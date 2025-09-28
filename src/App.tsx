@@ -11,6 +11,7 @@ import AlumniProfilePage from "./pages/AlumniProfilePage";
 import AlumniProfileTest from "./pages/AlumniProfileTest";
 import AlumniProfileSimple from "./pages/AlumniProfileSimple";
 import AlumniDashboard from "./components/AlumniDashboard";
+import AlumniRequests from "./pages/AlumniRequests";
 import DataManagerTest from "./pages/DataManagerTest";
 import QuickNav from "./pages/QuickNav";
 import SetupTestData from "./pages/SetupTestData";
@@ -45,6 +46,7 @@ const App = () => (
           <Route path="/setup-test-data" element={<SetupTestData />} />
           <Route path="/test-alumni-manager" element={<TestAlumniDataManager />} />
           <Route path="/alumni-dashboard" element={<ErrorBoundary><AlumniDashboard /></ErrorBoundary>} />
+          <Route path="/alumni-requests" element={<ErrorBoundary><AlumniRequests /></ErrorBoundary>} />
           <Route path="/call-requests" element={<ErrorBoundary><CallRequestsPanel /></ErrorBoundary>} />
           <Route path="/alumni/:id" element={<AlumniProfileView />} />
           <Route path="/home" element={<Index />} />
