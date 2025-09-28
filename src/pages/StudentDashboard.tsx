@@ -23,6 +23,7 @@ import {
 import { studentDataManager, userDataManager, StudentProfile } from '@/lib/dataManager'
 import ConnectScreen from '@/components/ConnectScreen'
 import MatchingTest from '@/components/MatchingTest'
+import DatabaseDebug from '@/components/DatabaseDebug'
 import TimelineComponent from '@/components/TimelineComponent'
 
 const StudentDashboard = () => {
@@ -250,6 +251,7 @@ const StudentDashboard = () => {
           <TabsContent value="connect" className="space-y-6">
             <ConnectScreen />
             <MatchingTest />
+            <DatabaseDebug />
           </TabsContent>
 
           {/* Schedule Management Tab */}

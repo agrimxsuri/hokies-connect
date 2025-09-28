@@ -19,6 +19,7 @@ import {
 import { studentDataManager, userDataManager, StudentProfile } from '@/lib/dataManager'
 import { generateMatchesForStudent, saveMatches } from '@/lib/matching'
 import { supabase } from '@/lib/supabase'
+import ExistingMatches from './ExistingMatches'
 
 interface MatchedAlumni {
   id: string
@@ -45,6 +46,7 @@ const ConnectScreen = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     loadProfile()
@@ -53,8 +55,10 @@ const ConnectScreen = () => {
   const loadProfile = async () => {
     try {
       const currentUser = userDataManager.getCurrentUser()
+      console.log('Current user:', currentUser)
       if (currentUser?.userType === 'student') {
         const studentProfile = studentDataManager.getProfileById(currentUser.userId)
+        console.log('Student profile:', studentProfile)
         setProfile(studentProfile)
       }
     } catch (error) {
@@ -63,11 +67,19 @@ const ConnectScreen = () => {
   }
 
   const handleConnect = async () => {
-    if (!profile) return
+    if (!profile) {
+      setError('No profile found. Please create your profile first.')
+      return
+    }
 
     setIsGenerating(true)
+    setError('')
+    
     try {
       console.log('Generating AI matches for student:', profile.id)
+      console.log('Student user_id:', profile.id)
+      
+      // Use profile.id (which should be user_id) for matching
       const generatedMatches = await generateMatchesForStudent(profile.id)
       console.log('Generated matches:', generatedMatches)
 
@@ -75,18 +87,29 @@ const ConnectScreen = () => {
         console.log('No matches found')
         setMatches([])
         setHasGenerated(true)
+        setError('No matches found. This could be because there are no alumni in the database or no compatible matches.')
         return
       }
 
       // Get alumni details for each match
       const alumniIds = generatedMatches.map(match => match.alumniId)
-      const { data: alumniData, error } = await supabase
+      console.log('Alumni IDs to fetch:', alumniIds)
+      
+      const { data: alumniData, error: alumniError } = await supabase
         .from('alumni_profiles')
         .select('*')
         .in('user_id', alumniIds)
 
-      if (error) {
-        console.error('Error fetching alumni data:', error)
+      if (alumniError) {
+        console.error('Error fetching alumni data:', alumniError)
+        setError('Error fetching alumni data: ' + alumniError.message)
+        return
+      }
+
+      console.log('Fetched alumni data:', alumniData)
+
+      if (!alumniData || alumniData.length === 0) {
+        setError('No alumni data found in database. Please make sure alumni profiles are populated.')
         return
       }
 
@@ -119,6 +142,7 @@ const ConnectScreen = () => {
       }
     } catch (error) {
       console.error('Error generating matches:', error)
+      setError('Error generating matches: ' + (error as Error).message)
     } finally {
       setIsGenerating(false)
     }
@@ -209,12 +233,29 @@ const ConnectScreen = () => {
           )}
         </div>
 
-        {/* Matches Display */}
+        {/* Error Display */}
+        {error && (
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="text-red-600 text-center">
+                <p className="font-semibold">Error:</p>
+                <p>{error}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing Matches from Database */}
+        <div className="mb-8">
+          <ExistingMatches userId={profile.id} />
+        </div>
+
+        {/* New Matches Display */}
         {hasGenerated && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold text-vt-maroon">
-                Your AI Matches ({matches.length})
+                New AI Matches ({matches.length})
               </h2>
               <Button
                 onClick={handleConnect}
@@ -231,7 +272,7 @@ const ConnectScreen = () => {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Matches Found</h3>
+                  <h3 className="text-xl font-semibold mb-2">No New Matches Found</h3>
                   <p className="text-muted-foreground">
                     Try updating your profile to get better matches, or check if alumni profiles are available.
                   </p>

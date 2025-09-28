@@ -35,22 +35,133 @@ export interface AlumniProfile {
   updated_at: string
 }
 
+// Define engineering discipline categories for cross-disciplinary matching
+const ENGINEERING_CATEGORIES = {
+  'Computer Science': ['Computer Engineering', 'Software Engineering', 'Data Science', 'Information Technology'],
+  'Computer Engineering': ['Computer Science', 'Electrical Engineering', 'Software Engineering', 'Data Science'],
+  'Mechanical Engineering': ['Aerospace Engineering', 'Industrial Engineering', 'Automotive Engineering', 'Manufacturing'],
+  'Electrical Engineering': ['Computer Engineering', 'Aerospace Engineering', 'Telecommunications', 'Power Systems'],
+  'Aerospace Engineering': ['Mechanical Engineering', 'Electrical Engineering', 'Materials Science', 'Physics'],
+  'Civil Engineering': ['Environmental Engineering', 'Structural Engineering', 'Construction Management', 'Urban Planning'],
+  'Chemical Engineering': ['Materials Science', 'Biomedical Engineering', 'Environmental Engineering', 'Process Engineering'],
+  'Industrial Engineering': ['Mechanical Engineering', 'Operations Research', 'Supply Chain', 'Manufacturing'],
+  'Biomedical Engineering': ['Chemical Engineering', 'Mechanical Engineering', 'Electrical Engineering', 'Biology'],
+  'Materials Science': ['Chemical Engineering', 'Mechanical Engineering', 'Physics', 'Chemistry']
+}
+
+// Define industry categories for cross-industry matching
+const INDUSTRY_CATEGORIES = {
+  'Software Engineering': ['Data Analytics', 'Cybersecurity', 'Product Management', 'Technical Consulting'],
+  'Data Analytics': ['Software Engineering', 'Business Intelligence', 'Machine Learning', 'Statistics'],
+  'Cybersecurity': ['Software Engineering', 'Information Technology', 'Risk Management', 'Compliance'],
+  'Financial Services': ['Consulting', 'Investment Banking', 'Risk Management', 'Fintech'],
+  'Automotive Engineering': ['Mechanical Engineering', 'Manufacturing', 'Product Development', 'Quality Engineering'],
+  'Consulting': ['Financial Services', 'Technology', 'Strategy', 'Operations'],
+  'Manufacturing': ['Automotive Engineering', 'Industrial Engineering', 'Quality Control', 'Supply Chain']
+}
+
+// Define skill transferability matrix
+const SKILL_TRANSFERABILITY = {
+  'Programming': ['Software Engineering', 'Data Analytics', 'Cybersecurity', 'Computer Science', 'Computer Engineering'],
+  'Data Analysis': ['Data Analytics', 'Statistics', 'Business Intelligence', 'Machine Learning', 'Computer Science'],
+  'Problem Solving': ['Engineering', 'Consulting', 'Management', 'Research', 'Product Development'],
+  'Project Management': ['Consulting', 'Management', 'Operations', 'Product Management', 'Engineering'],
+  'Communication': ['Consulting', 'Management', 'Sales', 'Marketing', 'Education'],
+  'Leadership': ['Management', 'Consulting', 'Entrepreneurship', 'Operations', 'Strategy'],
+  'Research': ['Academia', 'R&D', 'Product Development', 'Consulting', 'Government'],
+  'Design': ['Product Development', 'User Experience', 'Architecture', 'Engineering', 'Marketing']
+}
+
+// Calculate cross-disciplinary match score
+const calculateCrossDisciplinaryScore = (studentMajor: string, alumniMajor: string, alumniPosition: string): { score: number, reason: string } => {
+  // Direct major match
+  if (studentMajor.toLowerCase() === alumniMajor.toLowerCase()) {
+    return { score: 40, reason: `Same major: ${alumniMajor}` }
+  }
+
+  // Check engineering categories
+  for (const [category, relatedMajors] of Object.entries(ENGINEERING_CATEGORIES)) {
+    if (studentMajor.toLowerCase().includes(category.toLowerCase()) || 
+        category.toLowerCase().includes(studentMajor.toLowerCase())) {
+      if (relatedMajors.some(related => 
+        alumniMajor.toLowerCase().includes(related.toLowerCase()) || 
+        related.toLowerCase().includes(alumniMajor.toLowerCase()))) {
+        return { score: 35, reason: `Related engineering field: ${alumniMajor} (${category} related)` }
+      }
+    }
+  }
+
+  // Check industry relevance
+  for (const [industry, relatedFields] of Object.entries(INDUSTRY_CATEGORIES)) {
+    if (alumniPosition.toLowerCase().includes(industry.toLowerCase()) || 
+        industry.toLowerCase().includes(alumniPosition.toLowerCase())) {
+      if (relatedFields.some(field => 
+        studentMajor.toLowerCase().includes(field.toLowerCase()) || 
+        field.toLowerCase().includes(studentMajor.toLowerCase()))) {
+        return { score: 30, reason: `Industry alignment: ${alumniPosition} in ${industry}` }
+      }
+    }
+  }
+
+  // Check skill transferability
+  for (const [skill, applicableFields] of Object.entries(SKILL_TRANSFERABILITY)) {
+    if (applicableFields.some(field => 
+      studentMajor.toLowerCase().includes(field.toLowerCase()) || 
+      field.toLowerCase().includes(studentMajor.toLowerCase()))) {
+      if (applicableFields.some(field => 
+        alumniMajor.toLowerCase().includes(field.toLowerCase()) || 
+        field.toLowerCase().includes(alumniMajor.toLowerCase()))) {
+        return { score: 25, reason: `Skill transferability: ${skill} skills applicable` }
+      }
+    }
+  }
+
+  // General engineering connection
+  const engineeringKeywords = ['engineering', 'technology', 'science', 'mathematics', 'physics', 'chemistry']
+  const studentHasEngineering = engineeringKeywords.some(keyword => 
+    studentMajor.toLowerCase().includes(keyword))
+  const alumniHasEngineering = engineeringKeywords.some(keyword => 
+    alumniMajor.toLowerCase().includes(keyword))
+
+  if (studentHasEngineering && alumniHasEngineering) {
+    return { score: 20, reason: `Both in STEM fields: ${studentMajor} → ${alumniMajor}` }
+  }
+
+  // Business/Finance connection
+  const businessKeywords = ['business', 'finance', 'economics', 'management', 'marketing']
+  const studentHasBusiness = businessKeywords.some(keyword => 
+    studentMajor.toLowerCase().includes(keyword))
+  const alumniHasBusiness = businessKeywords.some(keyword => 
+    alumniMajor.toLowerCase().includes(keyword) || 
+    alumniPosition.toLowerCase().includes(keyword))
+
+  if (studentHasBusiness && alumniHasBusiness) {
+    return { score: 20, reason: `Both in business/finance fields` }
+  }
+
+  // Default connection
+  return { score: 15, reason: `Cross-disciplinary connection: ${studentMajor} → ${alumniMajor}` }
+}
+
 // Calculate match score between student and alumni
 const calculateMatchScore = (student: StudentProfile, alumni: AlumniProfile): MatchScore => {
   let score = 0
   const reasons: string[] = []
 
-  // Major matching (40% weight)
-  const commonMajors = student.majors.filter(major => 
-    alumni.majors.some(alumniMajor => 
-      alumniMajor.toLowerCase().includes(major.toLowerCase()) ||
-      major.toLowerCase().includes(alumniMajor.toLowerCase())
-    )
-  )
+  // Cross-disciplinary major matching (40% weight)
+  let bestMajorMatch = { score: 0, reason: '' }
+  for (const studentMajor of student.majors) {
+    for (const alumniMajor of alumni.majors) {
+      const match = calculateCrossDisciplinaryScore(studentMajor, alumniMajor, alumni.current_position)
+      if (match.score > bestMajorMatch.score) {
+        bestMajorMatch = match
+      }
+    }
+  }
   
-  if (commonMajors.length > 0) {
-    score += 40
-    reasons.push(`Same major(s): ${commonMajors.join(', ')}`)
+  if (bestMajorMatch.score > 0) {
+    score += bestMajorMatch.score
+    reasons.push(bestMajorMatch.reason)
   }
 
   // Industry relevance (25% weight)
@@ -151,7 +262,7 @@ export const generateAllMatches = async (): Promise<MatchScore[]> => {
   for (const student of students) {
     for (const alumniProfile of alumni) {
       const match = calculateMatchScore(student, alumniProfile)
-      if (match.score >= 30) { // Only include matches with score >= 30
+      if (match.score >= 20) { // Lower threshold for more matches
         allMatches.push(match)
       }
     }
@@ -179,7 +290,7 @@ export const generateMatchesForStudent = async (studentId: string): Promise<Matc
 
   for (const alumniProfile of alumni) {
     const match = calculateMatchScore(student, alumniProfile)
-    if (match.score >= 30) {
+    if (match.score >= 20) { // Lower threshold for more matches
       matches.push(match)
     }
   }
@@ -188,8 +299,8 @@ export const generateMatchesForStudent = async (studentId: string): Promise<Matc
   return matches.sort((a, b) => b.score - a.score)
 }
 
-// Get top matches for a student (limit to top 5)
-export const getTopMatchesForStudent = async (studentId: string, limit: number = 5): Promise<MatchScore[]> => {
+// Get top matches for a student (limit to top 10 for more variety)
+export const getTopMatchesForStudent = async (studentId: string, limit: number = 10): Promise<MatchScore[]> => {
   const matches = await generateMatchesForStudent(studentId)
   return matches.slice(0, limit)
 }

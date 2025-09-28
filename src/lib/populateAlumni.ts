@@ -1,6 +1,6 @@
 import { supabase } from './supabase'
 
-// Alumni data from the text file
+// Complete alumni data from the text file - all 30 alumni
 const alumniData = [
   {
     name: "Aanya Kapoor",
