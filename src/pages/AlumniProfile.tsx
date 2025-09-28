@@ -17,7 +17,7 @@ const AlumniProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Initialize Gemini AI (you'll need to add your API key to environment variables)
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'your-api-key-here');
+  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyAtHuLFZy1cAetnG6lruXBxjjaakinXzjA');
   
   const [profileData, setProfileData] = useState({
     name: "",

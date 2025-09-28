@@ -240,31 +240,10 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
           <div>
             <h3 className="text-xl font-semibold text-vt-maroon mb-4">Contact Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {profile.contact.email && (
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{profile.contact.email}</span>
-                </div>
-              )}
-              
               {profile.contact.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">{profile.contact.phone}</span>
-                </div>
-              )}
-              
-              {profile.contact.linkedin && (
-                <div className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                  <a 
-                    href={`https://${profile.contact.linkedin}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-vt-maroon hover:underline"
-                  >
-                    LinkedIn Profile
-                  </a>
                 </div>
               )}
               

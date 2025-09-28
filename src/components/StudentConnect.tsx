@@ -37,7 +37,7 @@ const StudentConnect = () => {
   const [isAIMatching, setIsAIMatching] = useState(false);
 
   // Initialize Gemini AI
-  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'your-api-key-here');
+  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyAtHuLFZy1cAetnG6lruXBxjjaakinXzjA');
 
   // Combine static alumni data with user-created profiles
   const getAllAlumniProfiles = (): AlumniProfile[] => {
@@ -304,6 +304,9 @@ const StudentConnect = () => {
             </Button>
             <p className="text-sm text-gray-500 mt-2">
               Our AI will analyze your profile and find the best alumni matches
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              using Gemini
             </p>
           </div>
         </CardContent>

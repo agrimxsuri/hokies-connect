@@ -375,23 +375,28 @@ const ConnectScreen = ({ onCallRequested }: ConnectScreenProps) => {
           </p>
           
           {!hasGenerated && (
-            <Button
-              onClick={handleConnect}
-              disabled={isGenerating}
-              className="bg-vt-maroon hover:bg-vt-maroon-light text-white px-8 py-3 text-lg"
-            >
-              {isGenerating ? (
-                <>
-                  <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                  Finding Matches...
-                </>
-              ) : (
-                <>
-                  <Users className="h-5 w-5 mr-2" />
-                  Find My Matches
-                </>
-              )}
-            </Button>
+            <div className="text-center">
+              <Button
+                onClick={handleConnect}
+                disabled={isGenerating}
+                className="bg-vt-maroon hover:bg-vt-maroon-light text-white px-8 py-3 text-lg"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                    Finding Matches...
+                  </>
+                ) : (
+                  <>
+                    <Users className="h-5 w-5 mr-2" />
+                    Find My Matches
+                  </>
+                )}
+              </Button>
+              <p className="text-sm text-gray-500 mt-2">
+                using Gemini
+              </p>
+            </div>
           )}
         </div>
 
@@ -502,28 +507,7 @@ const ConnectScreen = ({ onCallRequested }: ConnectScreenProps) => {
                         </ul>
                       </div>
 
-                      {/* Contact Info */}
-                      <div className="space-y-2">
-                        {match.contact_info.email && (
-                          <div className="flex items-center gap-2">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">{match.contact_info.email}</span>
-                          </div>
-                        )}
-                        {match.contact_info.linkedin && (
-                          <div className="flex items-center gap-2">
-                            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                            <a 
-                              href={`https://${match.contact_info.linkedin}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-vt-maroon hover:underline"
-                            >
-                              LinkedIn Profile
-                            </a>
-                          </div>
-                        )}
-                      </div>
+                      {/* Contact Info - Removed for privacy */}
 
                       {/* Action Buttons */}
                       <div className="space-y-2 pt-4">
