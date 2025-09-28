@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { GraduationCap, Camera, Plus, Trash2, Save, X, ChevronDown } from "lucide-react";
 import { studentDataManager, userDataManager, StudentProfile, JourneyEntry } from "@/lib/dataManager";
+import { upsertProfile as saveToSupabase } from "@/lib/api/studentAPI";
+import { generateMatchesForStudent, saveMatches } from "@/lib/matching";
 
 const StudentProfile = () => {
   const navigate = useNavigate();
@@ -179,8 +181,8 @@ const StudentProfile = () => {
     setIsSaving(true);
     
     try {
-      // Create the student profile object
-      const studentProfile = {
+      // Create the student profile object for Supabase
+      const studentProfileData = {
         name: profileData.name,
         majors: profileData.majors,
         currentStanding: profileData.currentStanding,
@@ -190,17 +192,48 @@ const StudentProfile = () => {
         journeyEntries: journeyEntries
       };
       
-      // Save profile using centralized data manager
-      const savedProfile = studentDataManager.saveProfile(studentProfile);
+      // Save profile to Supabase
+      const savedProfile = await saveToSupabase(studentProfileData);
       
-      // Set current user
-      userDataManager.setCurrentUser(savedProfile.id, 'student');
+      // Also save to localStorage as backup
+      const localStorageProfile = {
+        id: savedProfile.user_id, // Use user_id for consistency
+        name: profileData.name,
+        majors: profileData.majors,
+        currentStanding: profileData.currentStanding,
+        clubPositions: profileData.clubPositions,
+        minors: profileData.minors,
+        profilePicture: profileData.profilePicture,
+        journeyEntries: journeyEntries,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save to localStorage as backup
+      console.log('Saving to localStorage:', localStorageProfile);
+      studentDataManager.saveProfile(localStorageProfile);
+      userDataManager.setCurrentUser(savedProfile.user_id, 'student');
+      console.log('Profile saved to localStorage with user_id:', savedProfile.user_id);
       
-      alert('Profile saved successfully!');
-      navigate("/home");
+      // Generate AI matches for this student
+      let matchCount = 0;
+      try {
+        console.log('Generating AI matches for student...');
+        const matches = await generateMatchesForStudent(savedProfile.user_id);
+        console.log('Generated matches:', matches);
+        matchCount = matches.length;
+        
+        if (matches.length > 0) {
+          await saveMatches(matches);
+          console.log('Matches saved to database');
+        }
+      } catch (matchError) {
+        console.error('Error generating matches:', matchError);
+        // Don't fail the profile save if matching fails
+      }
+      
+      alert('Profile saved successfully! AI matching system will find suitable alumni for you.');
+      navigate("/student-dashboard");
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Error saving profile. Please try again.');

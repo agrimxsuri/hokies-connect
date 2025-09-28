@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { GraduationCap, Camera, Plus, Trash2, Save, X, ChevronDown, Briefcase, Building, MapPin } from "lucide-react";
 import { alumniDataManager, userDataManager, AlumniProfile, JourneyEntry, ProfessionalEntry } from "@/lib/dataManager";
+import { upsertProfile as saveToSupabase } from "@/lib/api/alumniAPI";
+import { generateAllMatches, saveMatches } from "@/lib/matching";
 import TimelineComponent from "@/components/TimelineComponent";
 
 const AlumniProfilePage = () => {
@@ -218,8 +220,29 @@ const AlumniProfilePage = () => {
     setIsSaving(true);
     
     try {
-      // Create the alumni profile object
-      const alumniProfile = {
+      // Create the alumni profile object for Supabase
+      const alumniProfileData = {
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        linkedin: profileData.linkedin,
+        website: profileData.website,
+        graduationYear: profileData.graduationYear,
+        currentPosition: profileData.currentPosition,
+        company: profileData.company,
+        majors: profileData.majors,
+        profilePicture: profileData.profilePicture,
+        journeyEntries: journeyEntries,
+        professionalEntries: professionalEntries
+      };
+      
+      // Save profile to Supabase
+      const savedProfile = await saveToSupabase(alumniProfileData);
+      
+      // Also save to localStorage as backup
+      const localStorageProfile = {
+        id: savedProfile.id,
         name: profileData.name,
         email: profileData.email,
         contact: {
@@ -237,19 +260,31 @@ const AlumniProfilePage = () => {
         resume: "",
         journeyEntries: journeyEntries,
         professionalEntries: professionalEntries,
-        hokieJourney: []
+        hokieJourney: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
       
-      // Save profile using centralized data manager
-      const savedProfile = alumniDataManager.saveProfile(alumniProfile);
-      
-      // Set current user
+      // Save to localStorage as backup
+      alumniDataManager.saveProfile(localStorageProfile);
       userDataManager.setCurrentUser(savedProfile.id, 'alumni');
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Generate AI matches for all students with this new alumni
+      try {
+        console.log('Generating AI matches for all students with new alumni...');
+        const allMatches = await generateAllMatches();
+        console.log('Generated all matches:', allMatches);
+        
+        if (allMatches.length > 0) {
+          await saveMatches(allMatches);
+          console.log('All matches saved to database');
+        }
+      } catch (matchError) {
+        console.error('Error generating matches:', matchError);
+        // Don't fail the profile save if matching fails
+      }
       
-      alert('Profile saved successfully!');
+      alert('Profile saved successfully! AI matching system will connect you with suitable students.');
       navigate("/alumni-dashboard");
     } catch (error) {
       console.error('Error saving profile:', error);

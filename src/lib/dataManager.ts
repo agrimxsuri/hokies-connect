@@ -193,20 +193,18 @@ export const alumniDataManager = {
 // Student Profile Management
 export const studentDataManager = {
   // Save student profile
-  saveProfile: (profile: Omit<StudentProfile, 'id' | 'createdAt' | 'updatedAt'>): StudentProfile => {
+  saveProfile: (profile: StudentProfile): StudentProfile => {
     const data = localStorage.getItem(STORAGE_KEYS.STUDENT_PROFILES);
     const profiles = data ? JSON.parse(data) : [];
-    const existingProfile = profiles.find(p => p.name === profile.name);
+    const existingProfile = profiles.find(p => p.id === profile.id);
     
     const studentProfile: StudentProfile = {
       ...profile,
-      id: existingProfile?.id || generateId(),
-      createdAt: existingProfile?.createdAt || getCurrentTimestamp(),
       updatedAt: getCurrentTimestamp()
     };
     
     const updatedProfiles = existingProfile 
-      ? profiles.map(p => p.id === existingProfile.id ? studentProfile : p)
+      ? profiles.map(p => p.id === profile.id ? studentProfile : p)
       : [...profiles, studentProfile];
     
     localStorage.setItem(STORAGE_KEYS.STUDENT_PROFILES, JSON.stringify(updatedProfiles));
