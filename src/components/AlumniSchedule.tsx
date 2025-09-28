@@ -79,6 +79,7 @@ const AlumniSchedule = () => {
   }
 
   const formatDateTime = (dateString: string) => {
+    if (!dateString) return 'No date specified'
     const date = new Date(dateString)
     return date.toLocaleString('en-US', {
       weekday: 'long',
@@ -88,6 +89,18 @@ const AlumniSchedule = () => {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const formatRelativeTime = (dateString: string) => {
+    if (!dateString) return 'No date specified'
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((date.getTime() - now.getTime()) / (1000 * 60 * 60))
+    
+    if (diffInHours < 0) return 'Past'
+    if (diffInHours < 24) return 'Today'
+    if (diffInHours < 48) return 'Tomorrow'
+    return `In ${Math.floor(diffInHours / 24)} days`
   }
 
   const getStatusColor = (status: string) => {
@@ -153,66 +166,108 @@ const AlumniSchedule = () => {
         </Badge>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-6">
         {requests.map((request) => (
-          <Card key={request.id} className="hover:shadow-md transition-shadow">
-            <CardHeader>
+          <Card key={request.id} className="hover:shadow-lg transition-all duration-200 border-l-4 border-l-vt-maroon">
+            <CardHeader className="pb-4">
               <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-vt-maroon text-white">
-                      {request.student_profiles?.name?.split(' ').map((n: string) => n[0]).join('') || 'S'}
+                <div className="flex items-start space-x-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={(request as any).student_profile?.profile_picture} />
+                    <AvatarFallback className="bg-vt-maroon text-white text-lg">
+                      {(request as any).student_profile?.name?.split(' ').map((n: string) => n[0]).join('') || 'S'}
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      {request.student_profiles?.name || 'Student'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {request.student_profiles?.majors?.join(', ')} • {request.student_profiles?.current_standing}
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-bold text-xl text-vt-maroon">
+                        {(request as any).student_profile?.name || 'Student'}
+                      </h3>
+                      <Badge variant="outline" className="bg-vt-maroon/10 text-vt-maroon border-vt-maroon">
+                        {(request as any).student_profile?.current_standing || 'Student'}
+                      </Badge>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-gray-700">
+                        {(request as any).student_profile?.majors?.join(', ') || 'Major not specified'}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatRelativeTime(request.scheduled_time)}
+                        </span>
+                        <Badge className={`${getStatusColor(request.status)} text-white text-xs`}>
+                          {getStatusLabel(request.status)}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Badge className={`${getStatusColor(request.status)} text-white`}>
-                  {getStatusLabel(request.status)}
-                </Badge>
               </div>
             </CardHeader>
             
             <CardContent className="space-y-4">
-              {/* Request Details */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Requested Time:</span>
-                  <span className="text-sm">{formatDateTime(request.scheduled_time)}</span>
+              {/* Call Request Details */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-3">
+                  <Clock className="h-5 w-5 text-vt-maroon mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-1">Requested Call Time</h4>
+                    <p className="text-sm text-gray-700">{formatDateTime(request.scheduled_time)}</p>
+                  </div>
                 </div>
                 
-                <div className="flex items-start gap-2">
-                  <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <span className="text-sm font-medium">Message:</span>
-                    <p className="text-sm text-muted-foreground mt-1">{request.message}</p>
+                <div className="flex items-start gap-3">
+                  <MessageSquare className="h-5 w-5 text-vt-maroon mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 mb-1">Student's Message</h4>
+                    <p className="text-sm text-gray-700 bg-white p-3 rounded border">
+                      {request.message || 'No message provided'}
+                    </p>
                   </div>
                 </div>
               </div>
 
+              {/* Student Profile Summary */}
+              {(request as any).student_profile && (
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Student Profile
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="font-medium text-blue-800">Name:</span>
+                      <span className="ml-2 text-blue-700">{(request as any).student_profile.name}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-blue-800">Standing:</span>
+                      <span className="ml-2 text-blue-700">{(request as any).student_profile.current_standing}</span>
+                    </div>
+                    <div className="md:col-span-2">
+                      <span className="font-medium text-blue-800">Major(s):</span>
+                      <span className="ml-2 text-blue-700">{(request as any).student_profile.majors?.join(', ')}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               {request.status === 'pending' && (
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="flex gap-4 pt-4 border-t">
                   <Button
                     onClick={() => handleAcceptRequest(request.id)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white h-12 text-lg font-semibold"
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Accept
+                    <CheckCircle className="h-5 w-5 mr-2" />
+                    Accept Invitation
                   </Button>
                   <Button
                     onClick={() => handleDeclineRequest(request.id)}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 h-12 text-lg font-semibold border-red-300 text-red-600 hover:bg-red-50"
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className="h-5 w-5 mr-2" />
                     Decline
                   </Button>
                 </div>
@@ -220,12 +275,15 @@ const AlumniSchedule = () => {
 
               {request.status === 'accepted' && (
                 <div className="pt-4 border-t">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-green-600">
-                      <CheckCircle className="h-4 w-4" />
-                      <span className="font-medium">Call Accepted</span>
+                  <div className="flex items-center justify-between bg-green-50 p-4 rounded-lg">
+                    <div className="flex items-center gap-3 text-green-700">
+                      <CheckCircle className="h-6 w-6" />
+                      <div>
+                        <span className="font-semibold text-lg">Call Accepted</span>
+                        <p className="text-sm">You've accepted this call request</p>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button className="bg-vt-maroon hover:bg-vt-maroon-light text-white">
                       <Phone className="h-4 w-4 mr-2" />
                       Join Call
                     </Button>
@@ -235,9 +293,12 @@ const AlumniSchedule = () => {
 
               {request.status === 'declined' && (
                 <div className="pt-4 border-t">
-                  <div className="flex items-center gap-2 text-red-600">
-                    <XCircle className="h-4 w-4" />
-                    <span className="font-medium">Call Declined</span>
+                  <div className="flex items-center gap-3 text-red-600 bg-red-50 p-4 rounded-lg">
+                    <XCircle className="h-6 w-6" />
+                    <div>
+                      <span className="font-semibold text-lg">Call Declined</span>
+                      <p className="text-sm">You've declined this call request</p>
+                    </div>
                   </div>
                 </div>
               )}

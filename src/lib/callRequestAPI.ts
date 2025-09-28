@@ -53,30 +53,53 @@ export const callRequestAPI = {
     }
   },
 
-  // Get call requests for a specific alumni
-  getRequestsForAlumni: async (alumniUserId: string): Promise<CallRequest[]> => {
+  // Get call requests for a specific alumni (fetch requests, then enrich with student profiles)
+  getRequestsForAlumni: async (alumniUserId: string): Promise<(CallRequest & { student_profile?: any })[]> => {
     try {
       console.log('🔍 callRequestAPI: Fetching call requests for alumni:', alumniUserId)
-      
-      const { data, error } = await supabase
+
+      // Step 1: fetch requests
+      const { data: requests, error: reqError } = await supabase
         .from('call_requests')
-        .select(`
-          *,
-          student_profiles (
-            name, majors, current_standing, profile_picture
-          )
-        `)
+        .select('*')
         .eq('alumni_user_id', alumniUserId)
         .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('❌ callRequestAPI: Supabase error fetching call requests:', error)
-        throw error
+      if (reqError) {
+        console.error('❌ callRequestAPI: Error fetching call requests:', reqError)
+        throw reqError
       }
 
-      console.log('✅ callRequestAPI: Call requests fetched successfully:', data)
-      console.log('📊 callRequestAPI: Number of requests found:', data?.length || 0)
-      return data || []
+      if (!requests || requests.length === 0) {
+        return []
+      }
+
+      // Step 2: fetch student profiles for all unique student_user_ids
+      const studentIds = Array.from(new Set(requests.map(r => r.student_user_id)))
+      const { data: students, error: stuError } = await supabase
+        .from('student_profiles')
+        .select('user_id, name, majors, current_standing, profile_picture')
+        .in('user_id', studentIds)
+
+      if (stuError) {
+        console.error('❌ callRequestAPI: Error fetching student profiles:', stuError)
+        // Return requests without enrichment rather than failing entirely
+        return requests as any
+      }
+
+      const byId: Record<string, any> = {}
+      for (const s of students || []) {
+        byId[s.user_id] = s
+      }
+
+      // Step 3: merge
+      const enriched = requests.map(r => ({
+        ...r,
+        student_profile: byId[r.student_user_id]
+      }))
+
+      console.log('✅ callRequestAPI: Enriched call requests count:', enriched.length)
+      return enriched
     } catch (error) {
       console.error('❌ callRequestAPI: Error in getRequestsForAlumni:', error)
       return []

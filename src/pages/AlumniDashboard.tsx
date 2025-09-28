@@ -8,7 +8,6 @@ import { Calendar, User, Building, MapPin, GraduationCap, Edit, Clock, Users } f
 import { userDataManager } from "@/lib/userDataManager";
 import { alumniDataManager, AlumniProfile } from "@/lib/alumniDataManager";
 import AlumniSchedule from "@/components/AlumniSchedule";
-import CallRequestDebug from "@/components/CallRequestDebug";
 import { useParams } from "react-router-dom";
 
 const AlumniDashboard = () => {
@@ -132,7 +131,6 @@ const AlumniDashboard = () => {
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            <CallRequestDebug />
             <AlumniSchedule />
           </TabsContent>
 

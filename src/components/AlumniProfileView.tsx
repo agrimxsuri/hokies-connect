@@ -12,9 +12,11 @@ import {
   ExternalLink, 
   Phone,
   Calendar,
-  Star
+  Star,
+  Briefcase
 } from 'lucide-react'
 import { alumniDataManager, AlumniProfile } from '@/lib/alumniDataManager'
+import TimelineComponent from '@/components/TimelineComponent'
 
 interface AlumniProfileViewProps {
   alumniId: string
@@ -226,6 +228,60 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
             </div>
           </div>
 
+          {/* Hokie Journey */}
+          {profile.hokieJourney && profile.hokieJourney.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
+                <GraduationCap className="h-5 w-5" />
+                Hokie Journey
+              </h3>
+              <div className="space-y-4">
+                <TimelineComponent entries={profile.hokieJourney} />
+              </div>
+            </div>
+          )}
+
+          {/* Professional Journey */}
+          {profile.professionalEntries && profile.professionalEntries.length > 0 && (
+            <div>
+              <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Professional Journey
+              </h3>
+              <div className="space-y-4">
+                {profile.professionalEntries.map((entry, index) => (
+                  <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">{entry.position}</h4>
+                        <p className="text-vt-maroon font-medium">{entry.company}</p>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {entry.startDate} - {entry.endDate || 'Present'}
+                        </p>
+                        {entry.description && (
+                          <p className="text-sm text-gray-600 mb-3">{entry.description}</p>
+                        )}
+                        {entry.achievements && entry.achievements.length > 0 && (
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-700 mb-2">Key Achievements:</h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              {entry.achievements.map((achievement, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                                  {achievement}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-4 pt-6 border-t">
             <Button 
@@ -234,15 +290,6 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
               className="flex-1"
             >
               Close
-            </Button>
-            <Button 
-              className="flex-1 bg-vt-maroon hover:bg-vt-maroon-light text-white"
-              onClick={() => {
-                // Here you could add logic to request a call or send a message
-                alert('This would initiate a connection request with the alumni.')
-              }}
-            >
-              Request Connection
             </Button>
           </div>
         </CardContent>
