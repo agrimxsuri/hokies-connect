@@ -2,6 +2,27 @@
 
 A Virginia Tech alumni networking platform that connects current students with alumni for mentorship, career guidance, and professional opportunities.
 
+## Deploy on Vercel
+
+*Frontend:* Vite + React (TypeScript)  
+*Output:* ⁠ dist ⁠  
+*Routing:* SPA rewrite via ⁠ vercel.json ⁠
+
+### One-time
+1.⁠ ⁠Push to GitHub.
+2.⁠ ⁠In Vercel: *Add New Project → Import this repo*.
+3.⁠ ⁠Framework preset: *Vite*  
+   Build Command: ⁠ npm run build ⁠  
+   Output Directory: ⁠ dist ⁠
+4.⁠ ⁠Add Environment Variables from ⁠ .env.example ⁠ for *Preview* and *Production*.
+
+### CLI (optional)
+```bash
+npm i -g vercel
+vercel        # preview
+vercel --prod # production
+```
+
 ## Features
 
 - **Student Profiles**: Create comprehensive academic profiles with Hokie Journey tracking
