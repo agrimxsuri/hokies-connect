@@ -8,17 +8,17 @@ const Header = () => {
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { name: "Home", path: "/" },
+    { name: "Home", path: "/home" },
     { name: "Connect", path: "/connect" },
-    { name: "Alumni", path: "/alumni" },
     { name: "Schedule", path: "/schedule" },
+    { name: "Profile", path: "/profile" },
   ];
 
   return (
     <header className="bg-card border-b shadow-subtle sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo and Brand */}
-        <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <Link to="/home" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <GraduationCap className="h-8 w-8 text-primary" />
           <div className="flex flex-col">
             <span className="font-heading font-bold text-lg leading-none text-primary">
