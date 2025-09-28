@@ -14,32 +14,38 @@ import {
   Mail
 } from 'lucide-react'
 import { callRequestAPI, CallRequest } from '@/lib/callRequestAPI'
-import { userDataManager } from '@/lib/userDataManager'
+import { useParams } from 'react-router-dom'
 
 const AlumniSchedule = () => {
   const [requests, setRequests] = useState<CallRequest[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const { userId: routeUserId } = useParams()
 
   useEffect(() => {
     loadRequests()
-  }, [])
+  }, [routeUserId])
 
   const loadRequests = async () => {
     try {
       setIsLoading(true)
       setError('')
       
-      const currentUser = userDataManager.getCurrentUser()
-      if (!currentUser || currentUser.userType !== 'alumni') {
+      const effectiveUserId = routeUserId
+      console.log('🔍 AlumniSchedule: Loading requests for userId:', effectiveUserId)
+      
+      if (!effectiveUserId) {
+        console.error('❌ AlumniSchedule: No userId found in route params')
         setError('Alumni user not found')
         return
       }
 
-      const callRequests = await callRequestAPI.getRequestsForAlumni(currentUser.userId)
+      console.log('🔍 AlumniSchedule: Calling getRequestsForAlumni with:', effectiveUserId)
+      const callRequests = await callRequestAPI.getRequestsForAlumni(effectiveUserId)
+      console.log('🔍 AlumniSchedule: Received requests:', callRequests)
       setRequests(callRequests)
     } catch (err) {
-      console.error('Error loading call requests:', err)
+      console.error('❌ AlumniSchedule: Error loading call requests:', err)
       setError('Failed to load call requests')
     } finally {
       setIsLoading(false)
@@ -179,14 +185,14 @@ const AlumniSchedule = () => {
                 <div className="flex items-center gap-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium">Requested Time:</span>
-                  <span className="text-sm">{formatDateTime(request.scheduled_date)}</span>
+                  <span className="text-sm">{formatDateTime(request.scheduled_time)}</span>
                 </div>
                 
                 <div className="flex items-start gap-2">
                   <MessageSquare className="h-4 w-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <span className="text-sm font-medium">Description:</span>
-                    <p className="text-sm text-muted-foreground mt-1">{request.description}</p>
+                    <span className="text-sm font-medium">Message:</span>
+                    <p className="text-sm text-muted-foreground mt-1">{request.message}</p>
                   </div>
                 </div>
               </div>

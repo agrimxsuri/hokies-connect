@@ -247,10 +247,10 @@ const AlumniProfilePage = () => {
       userDataManager.setCurrentUser(savedProfile.user_id, 'alumni');
       console.log('✅ User set in memory');
       
-      // Show success message and redirect
+      // Show success message and redirect with userId in URL so refresh works
       alert('Profile saved successfully! Redirecting to dashboard...');
       console.log('✅ Redirecting to alumni dashboard');
-      navigate("/alumni-dashboard");
+      navigate(`/alumni-dashboard/${savedProfile.user_id}`);
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Error saving profile. Please try again.');

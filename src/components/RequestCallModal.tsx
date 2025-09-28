@@ -10,11 +10,12 @@ import { callRequestAPI, CallRequestInsert } from '@/lib/callRequestAPI'
 interface RequestCallModalProps {
   alumniId: string
   alumniName: string
+  studentUserId: string
   onClose: () => void
   onSuccess: () => void
 }
 
-const RequestCallModal = ({ alumniId, alumniName, onClose, onSuccess }: RequestCallModalProps) => {
+const RequestCallModal = ({ alumniId, alumniName, studentUserId, onClose, onSuccess }: RequestCallModalProps) => {
   const [scheduledDate, setScheduledDate] = useState('')
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -40,17 +41,15 @@ const RequestCallModal = ({ alumniId, alumniName, onClose, onSuccess }: RequestC
     setError('')
 
     try {
-      // Get current student user
-      const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}')
-      if (!currentUser.userId) {
+      if (!studentUserId) {
         throw new Error('Student user not found')
       }
 
       const requestData: CallRequestInsert = {
-        student_user_id: currentUser.userId,
+        student_user_id: studentUserId,
         alumni_user_id: alumniId,
-        scheduled_date: scheduledDate,
-        description: description.trim(),
+        scheduled_time: scheduledDate,
+        message: description.trim(),
         status: 'pending'
       }
 
@@ -59,9 +58,10 @@ const RequestCallModal = ({ alumniId, alumniName, onClose, onSuccess }: RequestC
       alert('Call request sent successfully! The alumni will be notified.')
       onSuccess()
       onClose()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating call request:', err)
-      setError('Failed to send call request. Please try again.')
+      const errorMessage = err?.message || err?.error?.message || 'Failed to send call request. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

@@ -8,28 +8,34 @@ import { Calendar, User, Building, MapPin, GraduationCap, Edit, Clock, Users } f
 import { userDataManager } from "@/lib/userDataManager";
 import { alumniDataManager, AlumniProfile } from "@/lib/alumniDataManager";
 import AlumniSchedule from "@/components/AlumniSchedule";
+import CallRequestDebug from "@/components/CallRequestDebug";
+import { useParams } from "react-router-dom";
 
 const AlumniDashboard = () => {
   const [activeTab, setActiveTab] = useState("schedule");
   const [profile, setProfile] = useState<AlumniProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { userId: routeUserId } = useParams();
+
   useEffect(() => {
     loadProfile();
-  }, []);
+  }, [routeUserId]);
 
   const loadProfile = async () => {
     try {
       setIsLoading(true);
       
-      const currentUser = userDataManager.getCurrentUser();
-      console.log('🔍 Loading alumni profile for user:', currentUser);
-      
-      if (currentUser?.userType === 'alumni') {
-        const alumniProfile = await alumniDataManager.getProfileById(currentUser.userId);
-        console.log('🔍 Found alumni profile:', alumniProfile);
-        setProfile(alumniProfile);
+      // Prefer userId from route to survive refresh; fallback to in-memory user
+      const effectiveUserId = routeUserId || userDataManager.getUserId();
+      console.log('🔍 Loading alumni profile for userId:', effectiveUserId);
+      if (!effectiveUserId) {
+        setProfile(null);
+        return;
       }
+      const alumniProfile = await alumniDataManager.getProfileById(effectiveUserId);
+      console.log('🔍 Found alumni profile:', alumniProfile);
+      setProfile(alumniProfile);
     } catch (error) {
       console.error('Error loading alumni profile:', error);
     } finally {
@@ -126,6 +132,7 @@ const AlumniDashboard = () => {
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
+            <CallRequestDebug />
             <AlumniSchedule />
           </TabsContent>
 

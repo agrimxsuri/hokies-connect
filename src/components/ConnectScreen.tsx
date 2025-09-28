@@ -190,6 +190,8 @@ const ConnectScreen = () => {
   const handleRequestCallSuccess = () => {
     // Refresh matches or show success message
     console.log('Call request sent successfully')
+    // Optionally refresh the page or show a success message
+    // For now, the success is handled by the modal's alert
   }
 
   const getScoreColor = (score: number) => {
@@ -430,10 +432,11 @@ const ConnectScreen = () => {
       )}
 
       {/* Request Call Modal */}
-      {requestCallAlumni && (
+      {requestCallAlumni && profile && (
         <RequestCallModal
           alumniId={requestCallAlumni.id}
           alumniName={requestCallAlumni.name}
+          studentUserId={profile.id}
           onClose={handleCloseRequestCall}
           onSuccess={handleRequestCallSuccess}
         />

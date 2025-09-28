@@ -52,6 +52,9 @@ const App = () => (
           <Route path="/student-dashboard" element={<ErrorBoundary><StudentDashboard /></ErrorBoundary>} />
           <Route path="/alumni-profile" element={<ErrorBoundary><AlumniProfilePage /></ErrorBoundary>} />
           <Route path="/alumni-profile-edit" element={<ErrorBoundary><AlumniProfile /></ErrorBoundary>} />
+          {/* Alumni dashboard supports direct linking with userId to survive refreshes */}
+          <Route path="/alumni-dashboard/:userId" element={<ErrorBoundary><AlumniDashboard /></ErrorBoundary>} />
+          {/* Back-compat route (optional) */}
           <Route path="/alumni-dashboard" element={<ErrorBoundary><AlumniDashboard /></ErrorBoundary>} />
           <Route path="/alumni-requests" element={<ErrorBoundary><AlumniRequests /></ErrorBoundary>} />
           <Route path="/home" element={<Index />} />

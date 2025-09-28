@@ -4,9 +4,9 @@ export interface CallRequest {
   id: string
   student_user_id: string
   alumni_user_id: string
-  scheduled_date: string
-  description: string
-  meeting_link?: string
+  scheduled_time: string
+  message: string
+  response_message?: string
   status: 'pending' | 'accepted' | 'declined'
   created_at: string
   updated_at: string
@@ -15,9 +15,9 @@ export interface CallRequest {
 export interface CallRequestInsert {
   student_user_id: string
   alumni_user_id: string
-  scheduled_date: string
-  description: string
-  meeting_link?: string
+  scheduled_time: string
+  message: string
+  response_message?: string
   status?: 'pending' | 'accepted' | 'declined'
 }
 
@@ -34,22 +34,29 @@ export const callRequestAPI = {
         .single()
 
       if (error) {
-        console.error('Error creating call request:', error)
-        throw error
+        console.error('Supabase error creating call request:', error)
+        throw new Error(`Database error: ${error.message}`)
+      }
+
+      if (!data) {
+        throw new Error('No data returned from database')
       }
 
       console.log('Call request created successfully:', data)
       return data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in createRequest:', error)
-      throw error
+      if (error.message) {
+        throw error
+      }
+      throw new Error('Failed to create call request')
     }
   },
 
   // Get call requests for a specific alumni
   getRequestsForAlumni: async (alumniUserId: string): Promise<CallRequest[]> => {
     try {
-      console.log('Fetching call requests for alumni:', alumniUserId)
+      console.log('🔍 callRequestAPI: Fetching call requests for alumni:', alumniUserId)
       
       const { data, error } = await supabase
         .from('call_requests')
@@ -63,14 +70,15 @@ export const callRequestAPI = {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Error fetching call requests:', error)
+        console.error('❌ callRequestAPI: Supabase error fetching call requests:', error)
         throw error
       }
 
-      console.log('Call requests fetched:', data)
+      console.log('✅ callRequestAPI: Call requests fetched successfully:', data)
+      console.log('📊 callRequestAPI: Number of requests found:', data?.length || 0)
       return data || []
     } catch (error) {
-      console.error('Error in getRequestsForAlumni:', error)
+      console.error('❌ callRequestAPI: Error in getRequestsForAlumni:', error)
       return []
     }
   },
