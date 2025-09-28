@@ -47,6 +47,14 @@ export interface JourneyEntry {
 export interface AlumniProfile {
   id: string;
   name: string;
+  email: string;
+  passwordHash?: string;
+  contact: {
+    phone?: string;
+    location?: string;
+    linkedin?: string;
+    website?: string;
+  };
   majors: string[];
   graduationYear: string;
   currentPosition: string;
@@ -56,8 +64,19 @@ export interface AlumniProfile {
   resume: string;
   journeyEntries: JourneyEntry[];
   professionalEntries: ProfessionalEntry[];
+  hokieJourney: HokieJourneyEvent[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface HokieJourneyEvent {
+  id: string;
+  date: string;
+  title: string;
+  description: string;
+  type: 'student-life' | 'event' | 'award' | 'academic' | 'leadership';
+  mediaUrl?: string;
+  visibility: 'public' | 'private';
 }
 
 export interface ProfessionalEntry {
@@ -84,10 +103,11 @@ export interface CallRequest {
   id: string;
   studentId: string;
   alumniId: string;
-  date: string;
-  description: string;
-  meetingLink?: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  message: string;
+  preferredTimes: string[];
+  status: 'pending' | 'accepted' | 'declined' | 'proposed_time';
+  scheduledTime?: string;
+  responseMessage?: string;
   createdAt: string;
   updatedAt: string;
 }

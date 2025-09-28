@@ -2,15 +2,32 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, User, Users } from "lucide-react";
+import { userDataManager } from "@/lib/dataManager";
 
 const UserTypeSelection = () => {
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState<"student" | "alumni" | null>(null);
 
+  const resetAppState = () => {
+    // Clear any existing user session
+    userDataManager.clearCurrentUser();
+    
+    // Clear any cached data
+    localStorage.removeItem('hokies_connect_student_profiles');
+    localStorage.removeItem('hokies_connect_alumni_profiles');
+    localStorage.removeItem('hokies_connect_connection_requests');
+    localStorage.removeItem('hokies_connect_call_requests');
+    localStorage.removeItem('hokies_connect_scheduled_calls');
+    
+    console.log('🔍 DEBUG - App state reset for new user flow');
+  };
+
   const handleContinue = () => {
     if (selectedType === "student") {
+      resetAppState();
       navigate("/student-profile");
     } else if (selectedType === "alumni") {
+      resetAppState();
       navigate("/alumni-profile");
     }
   };
