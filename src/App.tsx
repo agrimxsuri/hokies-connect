@@ -11,7 +11,7 @@ import AlumniProfile from "./components/AlumniProfile";
 import AlumniProfilePage from "./pages/AlumniProfilePage";
 import AlumniProfileTest from "./pages/AlumniProfileTest";
 import AlumniProfileSimple from "./pages/AlumniProfileSimple";
-import AlumniDashboard from "./components/AlumniDashboard";
+import AlumniDashboard from "./pages/AlumniDashboard";
 import AlumniRequests from "./pages/AlumniRequests";
 import DataManagerTest from "./pages/DataManagerTest";
 import QuickNav from "./pages/QuickNav";

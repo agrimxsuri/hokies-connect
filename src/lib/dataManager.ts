@@ -136,20 +136,18 @@ export interface UserSession {
 // Alumni Profile Management
 export const alumniDataManager = {
   // Save alumni profile
-  saveProfile: (profile: Omit<AlumniProfile, 'id' | 'createdAt' | 'updatedAt'>): AlumniProfile => {
+  saveProfile: (profile: AlumniProfile): AlumniProfile => {
     const data = localStorage.getItem(STORAGE_KEYS.ALUMNI_PROFILES);
     const profiles = data ? JSON.parse(data) : [];
-    const existingProfile = profiles.find(p => p.name === profile.name);
+    const existingProfile = profiles.find(p => p.id === profile.id);
     
     const alumniProfile: AlumniProfile = {
       ...profile,
-      id: existingProfile?.id || generateId(),
-      createdAt: existingProfile?.createdAt || getCurrentTimestamp(),
       updatedAt: getCurrentTimestamp()
     };
     
     const updatedProfiles = existingProfile 
-      ? profiles.map(p => p.id === existingProfile.id ? alumniProfile : p)
+      ? profiles.map(p => p.id === profile.id ? alumniProfile : p)
       : [...profiles, alumniProfile];
     
     localStorage.setItem(STORAGE_KEYS.ALUMNI_PROFILES, JSON.stringify(updatedProfiles));
@@ -319,7 +317,7 @@ export const callRequestManager = {
       id: generateId(),
       studentId,
       alumniId,
-      date,
+      scheduledTime: date,
       description,
       meetingLink,
       status: 'pending',

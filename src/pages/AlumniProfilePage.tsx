@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { GraduationCap, Camera, Plus, Trash2, Save, X, ChevronDown, Briefcase, Building, MapPin } from "lucide-react";
-import { alumniDataManager, userDataManager, AlumniProfile, JourneyEntry, ProfessionalEntry } from "@/lib/dataManager";
+import { userDataManager } from "@/lib/userDataManager";
+import { alumniDataManager, AlumniProfile } from "@/lib/alumniDataManager";
+import { JourneyEntry, ProfessionalEntry } from "@/lib/dataManager";
 import { upsertProfile as saveToSupabase } from "@/lib/api/alumniAPI";
 import { generateAllMatches, saveMatches } from "@/lib/matching";
 import TimelineComponent from "@/components/TimelineComponent";
@@ -239,52 +241,15 @@ const AlumniProfilePage = () => {
       
       // Save profile to Supabase
       const savedProfile = await saveToSupabase(alumniProfileData);
+      console.log('✅ Profile saved to Supabase:', savedProfile);
       
-      // Also save to localStorage as backup
-      const localStorageProfile = {
-        id: savedProfile.id,
-        name: profileData.name,
-        email: profileData.email,
-        contact: {
-          phone: profileData.phone,
-          location: profileData.location,
-          linkedin: profileData.linkedin,
-          website: profileData.website,
-        },
-        majors: profileData.majors,
-        graduationYear: profileData.graduationYear,
-        currentPosition: profileData.currentPosition,
-        company: profileData.company,
-        location: profileData.location,
-        profilePicture: profileData.profilePicture,
-        resume: "",
-        journeyEntries: journeyEntries,
-        professionalEntries: professionalEntries,
-        hokieJourney: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      // Set current user immediately
+      userDataManager.setCurrentUser(savedProfile.user_id, 'alumni');
+      console.log('✅ User set in memory');
       
-      // Save to localStorage as backup
-      alumniDataManager.saveProfile(localStorageProfile);
-      userDataManager.setCurrentUser(savedProfile.id, 'alumni');
-      
-      // Generate AI matches for all students with this new alumni
-      try {
-        console.log('Generating AI matches for all students with new alumni...');
-        const allMatches = await generateAllMatches();
-        console.log('Generated all matches:', allMatches);
-        
-        if (allMatches.length > 0) {
-          await saveMatches(allMatches);
-          console.log('All matches saved to database');
-        }
-      } catch (matchError) {
-        console.error('Error generating matches:', matchError);
-        // Don't fail the profile save if matching fails
-      }
-      
-      alert('Profile saved successfully! AI matching system will connect you with suitable students.');
+      // Show success message and redirect
+      alert('Profile saved successfully! Redirecting to dashboard...');
+      console.log('✅ Redirecting to alumni dashboard');
       navigate("/alumni-dashboard");
     } catch (error) {
       console.error('Error saving profile:', error);

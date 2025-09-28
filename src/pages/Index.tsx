@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import StudentDashboard from "@/pages/StudentDashboard";
-import { userDataManager } from "@/lib/dataManager";
+import { userDataManager } from "@/lib/userDataManager";
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<{ userId: string; userType: 'student' | 'alumni' } | null>(null)
