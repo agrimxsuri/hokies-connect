@@ -314,7 +314,9 @@ export const saveMatches = async (matches: MatchScore[]) => {
       alumni_user_id: match.alumniId,
       match_score: match.score,
       match_reasons: match.reasons,
-      created_at: new Date().toISOString()
+      status: 'pending',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     }))
 
     const { error } = await supabase
@@ -322,6 +324,7 @@ export const saveMatches = async (matches: MatchScore[]) => {
       .insert(matchRecords)
 
     if (error) throw error
+    console.log('Matches saved to database successfully')
     return true
   } catch (error) {
     console.error('Error saving matches:', error)

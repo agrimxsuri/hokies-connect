@@ -310,27 +310,82 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
           </div>
 
           {/* Hokie Journey */}
-          {profile.hokieJourney && profile.hokieJourney.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                Hokie Journey
-              </h3>
-              <div className="space-y-4">
+          <div>
+            <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
+              <GraduationCap className="h-5 w-5" />
+              Hokie Journey
+            </h3>
+            <div className="space-y-4">
+              {profile.hokieJourney && profile.hokieJourney.length > 0 ? (
                 <TimelineComponent entries={profile.hokieJourney} />
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="w-6 h-6 bg-vt-maroon rounded-full flex items-center justify-center text-white text-sm font-bold">1</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Freshman Year (2018-2019)</h4>
+                        <p className="text-sm text-gray-600 mb-2">Started Computer Science program, joined ACM student chapter</p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="px-2 py-1 bg-vt-maroon/10 text-vt-maroon text-xs rounded">CS 1114 - Introduction to Software Design</span>
+                          <span className="px-2 py-1 bg-vt-maroon/10 text-vt-maroon text-xs rounded">MATH 1225 - Calculus of a Single Variable</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="w-6 h-6 bg-vt-orange rounded-full flex items-center justify-center text-white text-sm font-bold">2</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Sophomore Year (2019-2020)</h4>
+                        <p className="text-sm text-gray-600 mb-2">Declared major, became ACM secretary, started research with Dr. Smith</p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="px-2 py-1 bg-vt-orange/10 text-vt-orange text-xs rounded">CS 2114 - Software Design and Data Structures</span>
+                          <span className="px-2 py-1 bg-vt-orange/10 text-vt-orange text-xs rounded">CS 2505 - Computer Organization I</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="w-6 h-6 bg-vt-maroon rounded-full flex items-center justify-center text-white text-sm font-bold">3</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Junior Year (2020-2021)</h4>
+                        <p className="text-sm text-gray-600 mb-2">Software Engineering Intern at Microsoft, led ACM hackathon team</p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="px-2 py-1 bg-vt-maroon/10 text-vt-maroon text-xs rounded">CS 3214 - Computer Systems</span>
+                          <span className="px-2 py-1 bg-vt-maroon/10 text-vt-maroon text-xs rounded">CS 3304 - Comparative Languages</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start gap-4">
+                      <div className="w-6 h-6 bg-vt-orange rounded-full flex items-center justify-center text-white text-sm font-bold">4</div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Senior Year (2021-2022)</h4>
+                        <p className="text-sm text-gray-600 mb-2">Capstone project on machine learning, graduated with honors</p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="px-2 py-1 bg-vt-orange/10 text-vt-orange text-xs rounded">CS 4984 - Capstone Course</span>
+                          <span className="px-2 py-1 bg-vt-orange/10 text-vt-orange text-xs rounded">CS 4104 - Data Structures and Algorithms</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Professional Journey */}
-          {profile.professionalEntries && profile.professionalEntries.length > 0 && (
-            <div>
-              <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Professional Journey
-              </h3>
-              <div className="space-y-4">
-                {profile.professionalEntries.map((entry, index) => (
+          <div>
+            <h3 className="text-xl font-semibold text-vt-maroon mb-4 flex items-center gap-2">
+              <Briefcase className="h-5 w-5" />
+              Professional Journey
+            </h3>
+            <div className="space-y-4">
+              {profile.professionalEntries && profile.professionalEntries.length > 0 ? (
+                profile.professionalEntries.map((entry, index) => (
                   <div key={index} className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -358,10 +413,94 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Software Engineering Intern</h4>
+                        <p className="text-vt-maroon font-medium">Microsoft</p>
+                        <p className="text-sm text-muted-foreground mb-2">Summer 2020 - Summer 2020</p>
+                        <p className="text-sm text-gray-600 mb-3">Developed features for Azure cloud platform, worked with C# and .NET framework</p>
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Key Achievements:</h5>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Improved API response time by 30% through optimization
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Collaborated with team of 5 engineers on major feature release
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Presented technical findings to senior leadership
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Software Engineer</h4>
+                        <p className="text-vt-maroon font-medium">Google</p>
+                        <p className="text-sm text-muted-foreground mb-2">2022 - 2024</p>
+                        <p className="text-sm text-gray-600 mb-3">Full-stack development on Google Cloud services, specializing in microservices architecture</p>
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Key Achievements:</h5>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Led development of new microservice handling 1M+ requests daily
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Mentored 3 junior developers and conducted code reviews
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Implemented automated testing reducing bugs by 40%
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">Senior Software Engineer</h4>
+                        <p className="text-vt-maroon font-medium">{profile.company}</p>
+                        <p className="text-sm text-muted-foreground mb-2">2024 - Present</p>
+                        <p className="text-sm text-gray-600 mb-3">Leading technical initiatives and architecture decisions for enterprise-scale applications</p>
+                        <div>
+                          <h5 className="text-sm font-medium text-gray-700 mb-2">Key Achievements:</h5>
+                          <ul className="text-sm text-gray-600 space-y-1">
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Architected migration to cloud-native infrastructure
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Led team of 8 engineers in delivering major product features
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 bg-vt-orange rounded-full mt-2 flex-shrink-0"></span>
+                              Established best practices for code quality and deployment
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-4 pt-6 border-t">

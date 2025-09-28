@@ -1,76 +1,154 @@
+import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calendar, Clock, Users } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, AlertCircle, Building } from "lucide-react";
+import { callRequestAPI, type CallRequest } from "@/lib/callRequestAPI";
+import { userDataManager } from "@/lib/userDataManager";
+
+interface CallRequestWithAlumni extends CallRequest {
+  alumni_profiles?: {
+    name: string
+    current_position: string
+    company: string
+    profile_picture: string
+  }
+}
 
 const Schedule = () => {
+  const [requests, setRequests] = useState<CallRequestWithAlumni[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  const load = async () => {
+    try {
+      setIsLoading(true)
+      setError("")
+      const current = userDataManager.getCurrentUser()
+      if (!current || current.userType !== "student") {
+        setError("Student not signed in")
+        return
+      }
+      const data = await callRequestAPI.getRequestsForStudent(current.userId)
+      setRequests(data)
+    } catch (e) {
+      setError("Failed to load schedule")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const fmt = (iso?: string | null) => {
+    if (!iso) return "Not scheduled"
+    const d = new Date(iso)
+    return `${d.toLocaleDateString()} ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  }
+
+  const statusBadge = (s: string) => {
+    const base = "flex items-center gap-1"
+    if (s === "accepted") return <Badge className={`${base} bg-green-100 text-green-800 border-green-200`}>Accepted</Badge>
+    if (s === "declined") return <Badge className={`${base} bg-red-100 text-red-800 border-red-200`}>Declined</Badge>
+    return <Badge className={`${base} bg-yellow-100 text-yellow-800 border-yellow-200`}>Pending</Badge>
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-16">
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vt-maroon mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading your schedule...</p>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="mb-8">
-            <Calendar className="h-16 w-16 text-primary mx-auto mb-4" />
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Schedule Management
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Manage your mentorship sessions and networking calls
-            </p>
-          </div>
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-vt-maroon mb-2">Schedule</h1>
+          <p className="text-lg text-gray-600">Your requested calls with alumni</p>
+        </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <Card className="shadow-card hover:shadow-elevated transition-shadow duration-300">
-              <CardContent className="p-6 text-center">
-                <Clock className="h-12 w-12 text-accent mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Upcoming Sessions</h3>
-                <p className="text-muted-foreground mb-4">
-                  View and manage your scheduled calls with alumni
-                </p>
-                <Button variant="outline" className="w-full">
-                  View Calendar
-                </Button>
-              </CardContent>
-            </Card>
+        {error && (
+          <Card className="mb-6">
+            <CardContent className="pt-6 text-center">
+              <AlertCircle className="h-10 w-10 text-red-500 mx-auto mb-3" />
+              <p className="text-red-600 mb-3">{error}</p>
+              <Button variant="outline" onClick={load}>Try Again</Button>
+            </CardContent>
+          </Card>
+        )}
 
-            <Card className="shadow-card hover:shadow-elevated transition-shadow duration-300">
-              <CardContent className="p-6 text-center">
-                <Users className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">Find Mentors</h3>
-                <p className="text-muted-foreground mb-4">
-                  Browse available alumni and schedule new sessions
-                </p>
-                <Button variant="vt" className="w-full">
-                  Browse Alumni
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card className="mt-8 shadow-card">
-            <CardContent className="p-6">
-              <h3 className="text-xl font-semibold mb-4">Recent Activity</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                  <div className="text-left">
-                    <p className="font-medium">Call with Sarah Chen</p>
-                    <p className="text-sm text-muted-foreground">Software Engineering Career Path</p>
-                  </div>
-                  <span className="text-sm text-muted-foreground">Yesterday, 2:00 PM</span>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                  <div className="text-left">
-                    <p className="font-medium">Upcoming: Call with Michael Rodriguez</p>
-                    <p className="text-sm text-muted-foreground">Product Management Insights</p>
-                  </div>
-                  <span className="text-sm text-accent font-medium">Tomorrow, 3:30 PM</span>
-                </div>
+        {requests.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <Calendar className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No scheduled calls yet</h3>
+              <p className="text-muted-foreground">Go to Connect and request a call with an alumni.</p>
+              <div className="mt-4">
+                <Button onClick={() => (window.location.href = "/student-dashboard")}>Go to Connect</Button>
               </div>
             </CardContent>
           </Card>
-        </div>
+        ) : (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Scheduled Calls ({requests.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {requests.map((r) => (
+                  <div key={r.id} className="p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={r.alumni_profiles?.profile_picture} />
+                          <AvatarFallback className="bg-vt-maroon text-white">
+                            {r.alumni_profiles?.name?.split(" ").map(n => n[0]).join("") || "A"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">{r.alumni_profiles?.name || "Alumni Member"}</h4>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                            <Building className="h-4 w-4" />
+                            <span>{r.alumni_profiles?.current_position} at {r.alumni_profiles?.company}</span>
+                          </div>
+                          <div className="bg-vt-maroon/10 p-3 rounded-lg mb-3">
+                            <div className="flex items-center gap-2 text-vt-maroon font-medium mb-1">
+                              <Clock className="h-4 w-4" />
+                              <span>Scheduled Call</span>
+                            </div>
+                            <div className="text-sm text-vt-maroon">
+                              <div className="font-medium">{fmt(r.scheduled_time)}</div>
+                              <div className="text-muted-foreground mt-1">{r.message}</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {statusBadge(r.status)}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
     </div>
   );

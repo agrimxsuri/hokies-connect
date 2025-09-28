@@ -6,6 +6,41 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { X, Calendar, MessageSquare, Send } from 'lucide-react'
 import { callRequestAPI, CallRequestInsert } from '@/lib/callRequestAPI'
+import { userDataManager } from '@/lib/userDataManager'
+
+// ADDON: Interface for student request data
+interface StudentRequestData {
+  studentId: string
+  alumniId: string
+  alumniName: string
+  scheduledDate: string
+  message: string
+  timestamp: string
+}
+
+// ADDON: Function to save student request data for schedule management display
+const saveStudentRequestData = (data: StudentRequestData) => {
+  try {
+    // Get existing student requests from localStorage
+    const existingRequests = JSON.parse(localStorage.getItem('student_request_data') || '[]')
+    
+    // Add new request data
+    const newRequest = {
+      id: `student_req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ...data,
+      status: 'pending',
+      created_at: data.timestamp
+    }
+    
+    // Save to localStorage
+    existingRequests.unshift(newRequest)
+    localStorage.setItem('student_request_data', JSON.stringify(existingRequests))
+    
+    console.log('✅ ADDON: Student request data saved:', newRequest)
+  } catch (error) {
+    console.error('❌ ADDON: Error saving student request data:', error)
+  }
+}
 
 interface RequestCallModalProps {
   alumniId: string
@@ -53,7 +88,27 @@ const RequestCallModal = ({ alumniId, alumniName, studentUserId, onClose, onSucc
         status: 'pending'
       }
 
+      // Enhanced logging to verify all data
+      console.log('🔄 RequestCallModal: Saving to database with full data:')
+      console.log('  - Student ID:', studentUserId)
+      console.log('  - Alumni ID:', alumniId)
+      console.log('  - Alumni Name:', alumniName)
+      console.log('  - Scheduled Time:', scheduledDate)
+      console.log('  - Message:', description.trim())
+      console.log('  - Full Request Data:', requestData)
+      
       await callRequestAPI.createRequest(requestData)
+      console.log('✅ RequestCallModal: Successfully saved to database')
+      
+      // ADDON: Save all student input data for schedule management display
+      saveStudentRequestData({
+        studentId: studentUserId,
+        alumniId: alumniId,
+        alumniName: alumniName,
+        scheduledDate: scheduledDate,
+        message: description.trim(),
+        timestamp: new Date().toISOString()
+      })
       
       alert('Call request sent successfully! The alumni will be notified.')
       onSuccess()

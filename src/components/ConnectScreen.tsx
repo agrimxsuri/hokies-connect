@@ -43,7 +43,11 @@ interface MatchedAlumni {
   status: 'pending' | 'accepted' | 'declined'
 }
 
-const ConnectScreen = () => {
+interface ConnectScreenProps {
+  onCallRequested?: () => void
+}
+
+const ConnectScreen = ({ onCallRequested }: ConnectScreenProps) => {
   const [profile, setProfile] = useState<StudentProfile | null>(null)
   const [matches, setMatches] = useState<MatchedAlumni[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -55,6 +59,7 @@ const ConnectScreen = () => {
 
   useEffect(() => {
     loadProfile()
+    loadExistingMatches()
   }, [])
 
   const loadProfile = async () => {
@@ -68,6 +73,73 @@ const ConnectScreen = () => {
       }
     } catch (error) {
       console.error('Error loading profile:', error)
+    }
+  }
+
+  const loadExistingMatches = async () => {
+    try {
+      const currentUser = userDataManager.getCurrentUser()
+      if (currentUser?.userType === 'student' && currentUser.userId) {
+        console.log('🔍 ConnectScreen: Loading existing matches for student:', currentUser.userId)
+        
+        // Load existing matches from database
+        const { data: matchesData, error: matchesError } = await supabase
+          .from('matches')
+          .select(`
+            *,
+            alumni:alumni_user_id(alumni_profiles(*))
+          `)
+          .eq('student_user_id', currentUser.userId)
+          .order('created_at', { ascending: false })
+
+        if (matchesError) {
+          console.error('Error loading existing matches:', matchesError)
+          return
+        }
+
+        if (matchesData && matchesData.length > 0) {
+          console.log('🔍 ConnectScreen: Found existing matches:', matchesData.length)
+          
+          // Convert database matches to MatchedAlumni format
+          const existingMatches: MatchedAlumni[] = matchesData.map(match => {
+            const alumniProfile = match.alumni?.alumni_profiles
+            return {
+              id: match.alumni_user_id,
+              user_id: match.alumni_user_id,
+              name: alumniProfile?.name || 'Alumni Member',
+              email: alumniProfile?.email || '',
+              contact: {
+                phone: alumniProfile?.contact_info?.phone || '',
+                location: alumniProfile?.location || '',
+                linkedin: alumniProfile?.contact_info?.linkedin || '',
+                website: alumniProfile?.contact_info?.website || ''
+              },
+              majors: alumniProfile?.majors || [],
+              graduationYear: alumniProfile?.graduation_year || '',
+              currentPosition: alumniProfile?.current_position || '',
+              company: alumniProfile?.company || '',
+              location: alumniProfile?.location || '',
+              profilePicture: alumniProfile?.profile_picture || '',
+              journeyEntries: [],
+              professionalEntries: [],
+              hokieJourney: [],
+              createdAt: match.created_at,
+              updatedAt: match.updated_at,
+              match_score: match.match_score,
+              match_reasons: match.match_reasons,
+              status: match.status as 'pending' | 'accepted' | 'declined'
+            }
+          })
+
+          setMatches(existingMatches)
+          setHasGenerated(true)
+          console.log('✅ ConnectScreen: Loaded existing matches:', existingMatches.length)
+        } else {
+          console.log('🔍 ConnectScreen: No existing matches found')
+        }
+      }
+    } catch (error) {
+      console.error('Error loading existing matches:', error)
     }
   }
 
@@ -153,20 +225,78 @@ const ConnectScreen = () => {
     }
   }
 
-  const handleAcceptMatch = (matchId: string) => {
-    setMatches(prev => prev.map(match => 
-      match.id === matchId 
-        ? { ...match, status: 'accepted' as const }
-        : match
-    ))
+  const handleAcceptMatch = async (matchId: string) => {
+    try {
+      // Update local state immediately for better UX
+      setMatches(prev => prev.map(match => 
+        match.id === matchId 
+          ? { ...match, status: 'accepted' as const }
+          : match
+      ))
+
+      // Save to database
+      const { error } = await supabase
+        .from('matches')
+        .update({ 
+          status: 'accepted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('alumni_user_id', matchId)
+        .eq('student_user_id', profile?.id)
+
+      if (error) {
+        console.error('Error updating match status:', error)
+        // Revert local state on error
+        setMatches(prev => prev.map(match => 
+          match.id === matchId 
+            ? { ...match, status: 'pending' as const }
+            : match
+        ))
+        alert('Failed to save connection. Please try again.')
+      } else {
+        console.log('Match accepted and saved to database')
+      }
+    } catch (error) {
+      console.error('Error accepting match:', error)
+      alert('Failed to save connection. Please try again.')
+    }
   }
 
-  const handleDeclineMatch = (matchId: string) => {
-    setMatches(prev => prev.map(match => 
-      match.id === matchId 
-        ? { ...match, status: 'declined' as const }
-        : match
-    ))
+  const handleDeclineMatch = async (matchId: string) => {
+    try {
+      // Update local state immediately for better UX
+      setMatches(prev => prev.map(match => 
+        match.id === matchId 
+          ? { ...match, status: 'declined' as const }
+          : match
+      ))
+
+      // Save to database
+      const { error } = await supabase
+        .from('matches')
+        .update({ 
+          status: 'declined',
+          updated_at: new Date().toISOString()
+        })
+        .eq('alumni_user_id', matchId)
+        .eq('student_user_id', profile?.id)
+
+      if (error) {
+        console.error('Error updating match status:', error)
+        // Revert local state on error
+        setMatches(prev => prev.map(match => 
+          match.id === matchId 
+            ? { ...match, status: 'pending' as const }
+            : match
+        ))
+        alert('Failed to save connection. Please try again.')
+      } else {
+        console.log('Match declined and saved to database')
+      }
+    } catch (error) {
+      console.error('Error declining match:', error)
+      alert('Failed to save connection. Please try again.')
+    }
   }
 
   const handleViewProfile = (alumniId: string) => {
@@ -190,8 +320,10 @@ const ConnectScreen = () => {
   const handleRequestCallSuccess = () => {
     // Refresh matches or show success message
     console.log('Call request sent successfully')
-    // Optionally refresh the page or show a success message
-    // For now, the success is handled by the modal's alert
+    // Trigger refresh of schedule tab
+    if (onCallRequested) {
+      onCallRequested()
+    }
   }
 
   const getScoreColor = (score: number) => {
@@ -446,3 +578,4 @@ const ConnectScreen = () => {
 }
 
 export default ConnectScreen
+export type { ConnectScreenProps }
