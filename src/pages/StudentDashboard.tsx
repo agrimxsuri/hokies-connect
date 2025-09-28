@@ -22,8 +22,6 @@ import {
 } from 'lucide-react'
 import { studentDataManager, userDataManager, StudentProfile } from '@/lib/dataManager'
 import ConnectScreen from '@/components/ConnectScreen'
-import MatchingTest from '@/components/MatchingTest'
-import DatabaseDebug from '@/components/DatabaseDebug'
 import TimelineComponent from '@/components/TimelineComponent'
 
 const StudentDashboard = () => {
@@ -250,8 +248,6 @@ const StudentDashboard = () => {
           {/* Connect Tab - AI Matching Screen */}
           <TabsContent value="connect" className="space-y-6">
             <ConnectScreen />
-            <MatchingTest />
-            <DatabaseDebug />
           </TabsContent>
 
           {/* Schedule Management Tab */}

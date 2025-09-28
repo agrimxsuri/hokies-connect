@@ -123,6 +123,75 @@ export const upsertProfile = async (profileData: AlumniProfileData): Promise<Alu
       }
     }
 
+    // Persist Hokie Journey entries to hokie_journey table
+    if (profileData.journeyEntries && profileData.journeyEntries.length > 0) {
+      const journeyRows = profileData.journeyEntries.flatMap(entry => [
+        ...entry.courses.map(course => ({
+          user_id: userId,
+          type: 'education' as const,
+          year_label: entry.year,
+          title: course,
+          details: null,
+          metadata: entry.gpa ? { gpa: entry.gpa } : null
+        })),
+        ...entry.clubs.map(club => ({
+          user_id: userId,
+          type: 'club' as const,
+          year_label: entry.year,
+          title: club,
+          details: null,
+          metadata: null
+        })),
+        ...entry.internships.map(internship => ({
+          user_id: userId,
+          type: 'internship' as const,
+          year_label: entry.year,
+          title: internship,
+          details: null,
+          metadata: null
+        })),
+        ...entry.research.map(research => ({
+          user_id: userId,
+          type: 'research' as const,
+          year_label: entry.year,
+          title: research,
+          details: null,
+          metadata: null
+        }))
+      ])
+
+      if (journeyRows.length > 0) {
+        const { error: journeyError } = await supabase
+          .from('hokie_journey')
+          .insert(journeyRows)
+
+        if (journeyError) {
+          console.error('Error inserting hokie_journey entries:', journeyError)
+        }
+      }
+    }
+
+    // Persist Professional Journey entries to professional_experiences table
+    if (profileData.professionalEntries && profileData.professionalEntries.length > 0) {
+      const professionalRows: ProfessionalExperienceInsert[] = profileData.professionalEntries.map(pe => ({
+        user_id: userId,
+        position: pe.position,
+        company: pe.company,
+        start_date: pe.startDate as unknown as any,
+        end_date: pe.endDate ? (pe.endDate as unknown as any) : null,
+        description: pe.description || null,
+        achievements: pe.achievements || []
+      }))
+
+      const { error: professionalError } = await supabase
+        .from('professional_experiences')
+        .insert(professionalRows)
+
+      if (professionalError) {
+        console.error('Error inserting professional_experiences entries:', professionalError)
+      }
+    }
+
     return data
   } catch (error) {
     console.error('Error upserting alumni profile:', error)

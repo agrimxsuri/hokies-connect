@@ -16,6 +16,7 @@ import {
   Briefcase
 } from 'lucide-react'
 import { alumniDataManager, AlumniProfile } from '@/lib/alumniDataManager'
+import { supabase } from '@/lib/supabase'
 import TimelineComponent from '@/components/TimelineComponent'
 
 interface AlumniProfileViewProps {
@@ -36,13 +37,93 @@ const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
     try {
       setIsLoading(true)
       setError(null)
-      
-      const alumniProfile = await alumniDataManager.getProfileById(alumniId)
-      if (alumniProfile) {
-        setProfile(alumniProfile)
-      } else {
-        setError('Alumni profile not found')
+
+      // Fetch base alumni profile by user_id
+      const { data, error } = await supabase
+        .from('alumni_profiles')
+        .select('*')
+        .eq('user_id', alumniId)
+        .single()
+
+      if (error) {
+        throw error
       }
+
+      if (!data) {
+        setError('Alumni profile not found')
+        setProfile(null)
+        return
+      }
+
+      // Fetch Hokie Journey entries
+      const { data: hokieJourneyData, error: hokieError } = await supabase
+        .from('hokie_journey')
+        .select('*')
+        .eq('user_id', alumniId)
+        .order('year_label')
+
+      if (hokieError) {
+        console.error('Error fetching hokie journey:', hokieError)
+      }
+
+      const hokieJourney = (hokieJourneyData || []).map((entry: any) => ({
+        year: entry.year_label,
+        title: entry.title,
+        description: entry.details || '',
+        type: entry.type === 'education' ? 'education' :
+              entry.type === 'club' ? 'activity' :
+              entry.type === 'internship' ? 'work' :
+              entry.type === 'research' ? 'achievement' : 'work',
+        details: entry.metadata ? Object.values(entry.metadata as Record<string, string>) : []
+      }))
+
+      // Fetch Professional Experiences
+      const { data: professionalData, error: professionalError } = await supabase
+        .from('professional_experiences')
+        .select('*')
+        .eq('user_id', alumniId)
+        .order('start_date', { ascending: false })
+
+      if (professionalError) {
+        console.error('Error fetching professional experiences:', professionalError)
+      }
+
+      const professionalEntries = (professionalData || []).map((entry: any) => ({
+        id: entry.id,
+        position: entry.position,
+        company: entry.company,
+        startDate: entry.start_date,
+        endDate: entry.end_date,
+        description: entry.description,
+        achievements: entry.achievements || []
+      }))
+
+      const alumniProfile: AlumniProfile = {
+        id: data.user_id,
+        user_id: data.user_id,
+        name: data.name || '',
+        email: data.email || '',
+        contact: {
+          phone: data.contact_info?.phone || '',
+          location: data.location || '',
+          linkedin: data.contact_info?.linkedin || '',
+          website: data.contact_info?.website || ''
+        },
+        majors: data.majors || [],
+        graduationYear: data.graduation_year || '',
+        currentPosition: data.current_position || '',
+        company: data.company || '',
+        location: data.location || '',
+        profilePicture: data.profile_picture || '',
+        resume: '',
+        journeyEntries: [],
+        professionalEntries,
+        hokieJourney,
+        createdAt: data.created_at || new Date().toISOString(),
+        updatedAt: data.updated_at || new Date().toISOString()
+      }
+
+      setProfile(alumniProfile)
     } catch (err) {
       console.error('Error loading alumni profile:', err)
       setError('Error loading profile')
