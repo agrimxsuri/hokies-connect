@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, User, Building, MapPin, GraduationCap, Edit, Clock, Users } from "lucide-react";
 import { userDataManager } from "@/lib/userDataManager";
 import { alumniDataManager, AlumniProfile } from "@/lib/alumniDataManager";
+import AlumniSchedule from "@/components/AlumniSchedule";
 
 const AlumniDashboard = () => {
   const [activeTab, setActiveTab] = useState("schedule");
@@ -125,28 +126,7 @@ const AlumniDashboard = () => {
 
           {/* Schedule Tab */}
           <TabsContent value="schedule" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  Your Schedule
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Scheduled Calls</h3>
-                  <p className="text-muted-foreground mb-4">
-                    You don't have any scheduled calls with students yet.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">• Students will request calls with you</p>
-                    <p className="text-sm text-muted-foreground">• You can accept or decline requests</p>
-                    <p className="text-sm text-muted-foreground">• Manage your availability here</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AlumniSchedule />
           </TabsContent>
 
           {/* Profile Tab */}

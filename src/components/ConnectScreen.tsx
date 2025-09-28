@@ -14,12 +14,15 @@ import {
   ExternalLink,
   RefreshCw,
   CheckCircle,
-  XCircle
+  XCircle,
+  Eye
 } from 'lucide-react'
 import { studentDataManager, userDataManager, StudentProfile } from '@/lib/dataManager'
 import { generateMatchesForStudent, saveMatches } from '@/lib/matching'
 import { supabase } from '@/lib/supabase'
 import ExistingMatches from './ExistingMatches'
+import AlumniProfileView from './AlumniProfileView'
+import RequestCallModal from './RequestCallModal'
 
 interface MatchedAlumni {
   id: string
@@ -47,6 +50,8 @@ const ConnectScreen = () => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [hasGenerated, setHasGenerated] = useState(false)
   const [error, setError] = useState('')
+  const [selectedAlumniId, setSelectedAlumniId] = useState<string | null>(null)
+  const [requestCallAlumni, setRequestCallAlumni] = useState<{id: string, name: string} | null>(null)
 
   useEffect(() => {
     loadProfile()
@@ -162,6 +167,29 @@ const ConnectScreen = () => {
         ? { ...match, status: 'declined' as const }
         : match
     ))
+  }
+
+  const handleViewProfile = (alumniId: string) => {
+    console.log('Viewing profile for alumni:', alumniId)
+    setSelectedAlumniId(alumniId)
+  }
+
+  const handleCloseProfile = () => {
+    setSelectedAlumniId(null)
+  }
+
+  const handleRequestCall = (alumniId: string, alumniName: string) => {
+    console.log('Requesting call with alumni:', alumniId, alumniName)
+    setRequestCallAlumni({ id: alumniId, name: alumniName })
+  }
+
+  const handleCloseRequestCall = () => {
+    setRequestCallAlumni(null)
+  }
+
+  const handleRequestCallSuccess = () => {
+    // Refresh matches or show success message
+    console.log('Call request sent successfully')
   }
 
   const getScoreColor = (score: number) => {
@@ -364,38 +392,25 @@ const ConnectScreen = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-2 pt-4">
-                        {match.status === 'pending' && (
-                          <>
-                            <Button
-                              onClick={() => handleAcceptMatch(match.id)}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              Connect
-                            </Button>
-                            <Button
-                              onClick={() => handleDeclineMatch(match.id)}
-                              variant="outline"
-                              className="flex-1"
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              Decline
-                            </Button>
-                          </>
-                        )}
-                        {match.status === 'accepted' && (
-                          <div className="flex-1 text-center py-2 text-green-600 font-medium">
-                            <CheckCircle className="h-4 w-4 inline mr-2" />
-                            Connected!
-                          </div>
-                        )}
-                        {match.status === 'declined' && (
-                          <div className="flex-1 text-center py-2 text-gray-500 font-medium">
-                            <XCircle className="h-4 w-4 inline mr-2" />
-                            Declined
-                          </div>
-                        )}
+                      <div className="space-y-2 pt-4">
+                        {/* View Profile Button - Always visible */}
+                        <Button
+                          onClick={() => handleViewProfile(match.id)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Profile
+                        </Button>
+                        
+                        {/* Request Call Button */}
+                        <Button
+                          onClick={() => handleRequestCall(match.id, match.name)}
+                          className="w-full bg-vt-maroon hover:bg-vt-maroon-light text-white"
+                        >
+                          <Phone className="h-4 w-4 mr-2" />
+                          Request Call
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -405,6 +420,24 @@ const ConnectScreen = () => {
           </div>
         )}
       </div>
+
+      {/* Alumni Profile View Modal */}
+      {selectedAlumniId && (
+        <AlumniProfileView 
+          alumniId={selectedAlumniId} 
+          onClose={handleCloseProfile} 
+        />
+      )}
+
+      {/* Request Call Modal */}
+      {requestCallAlumni && (
+        <RequestCallModal
+          alumniId={requestCallAlumni.id}
+          alumniName={requestCallAlumni.name}
+          onClose={handleCloseRequestCall}
+          onSuccess={handleRequestCallSuccess}
+        />
+      )}
     </div>
   )
 }

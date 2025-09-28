@@ -1,426 +1,254 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, MessageCircle, MapPin, Briefcase, Calendar, Award, Building, GraduationCap, Star, Users, BookOpen } from "lucide-react";
-import { alumniData, AlumniProfile } from "@/data/alumniData";
-import { alumniDataManager, studentDataManager, connectionDataManager, userDataManager } from "@/lib/dataManager";
-import RequestCallModal from "./RequestCallModal";
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { 
+  X, 
+  Building, 
+  MapPin, 
+  GraduationCap, 
+  Mail, 
+  ExternalLink, 
+  Phone,
+  Calendar,
+  Star
+} from 'lucide-react'
+import { alumniDataManager, AlumniProfile } from '@/lib/alumniDataManager'
 
-const AlumniProfileView = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [alumni, setAlumni] = useState<AlumniProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
-  const [isStudent, setIsStudent] = useState(false);
+interface AlumniProfileViewProps {
+  alumniId: string
+  onClose: () => void
+}
+
+const AlumniProfileView = ({ alumniId, onClose }: AlumniProfileViewProps) => {
+  const [profile, setProfile] = useState<AlumniProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (id) {
-      // First check static alumni data
-      let foundAlumni = alumniData.find(a => a.id === id);
-      
-      // If not found in static data, check dynamic alumni profiles
-      if (!foundAlumni) {
-        const dynamicAlumni = alumniDataManager.getProfileById(id);
-        if (dynamicAlumni) {
-          // Convert dynamic alumni to static format
-          foundAlumni = {
-            id: dynamicAlumni.id,
-            name: dynamicAlumni.name,
-            major: dynamicAlumni.majors.join(', '),
-            club: dynamicAlumni.journeyEntries?.[0]?.clubs?.join(', ') || 'Various clubs',
-            field: dynamicAlumni.currentPosition || 'Professional',
-            company: dynamicAlumni.company,
-            graduationYear: dynamicAlumni.graduationYear,
-            currentPosition: dynamicAlumni.currentPosition,
-            location: dynamicAlumni.location,
-            bio: `Virginia Tech ${dynamicAlumni.majors.join(' and ')} graduate working as ${dynamicAlumni.currentPosition} at ${dynamicAlumni.company}.`,
-            interests: dynamicAlumni.professionalEntries?.map(entry => entry.position) || [dynamicAlumni.currentPosition],
-            profilePicture: dynamicAlumni.profilePicture
-          };
-        }
-      }
-      
-      if (foundAlumni) {
-        setAlumni(foundAlumni);
-      }
-      setIsLoading(false);
-    }
-  }, [id]);
+    loadProfile()
+  }, [alumniId])
 
-  // Check if current user is a student
-  useEffect(() => {
-    const currentUser = userDataManager.getCurrentUser();
-    setIsStudent(currentUser?.userType === 'student');
-  }, []);
-
-  const handleConnect = () => {
-    if (!alumni) return;
-    
+  const loadProfile = async () => {
     try {
-      const studentProfile = studentDataManager.getCurrentProfile();
-      if (!studentProfile) {
-        alert("Student profile not found. Please create your profile first.");
-        return;
+      setIsLoading(true)
+      setError(null)
+      
+      const alumniProfile = await alumniDataManager.getProfileById(alumniId)
+      if (alumniProfile) {
+        setProfile(alumniProfile)
+      } else {
+        setError('Alumni profile not found')
       }
-
-      // Send connection request using centralized data manager
-      console.log('🔍 DEBUG - Sending connection request with:', {
-        studentId: studentProfile.id,
-        alumniId: alumni.id,
-        message: `Hi! I'm ${studentProfile.name}, a ${studentProfile.currentStanding} ${studentProfile.majors.join(' and ')} student. I'd love to connect and learn about your career path!`
-      });
-      
-      const connectionRequest = connectionDataManager.sendRequest(
-        studentProfile.id,
-        alumni.id,
-        `Hi! I'm ${studentProfile.name}, a ${studentProfile.currentStanding} ${studentProfile.majors.join(' and ')} student. I'd love to connect and learn about your career path!`
-      );
-      
-      console.log('🔍 DEBUG - Connection request sent:', connectionRequest);
-      console.log('🔍 DEBUG - All connection requests after sending:', connectionDataManager.getAllRequests());
-      alert("Connection request sent! The alumni will be notified.");
-    } catch (error) {
-      console.error('Error sending connection request:', error);
-      alert("Error sending connection request. Please try again.");
+    } catch (err) {
+      console.error('Error loading alumni profile:', err)
+      setError('Error loading profile')
+    } finally {
+      setIsLoading(false)
     }
-  };
-
-  const handleScheduleCall = () => {
-    if (!alumni) return;
-    setShowScheduleModal(true);
-  };
-
-  const handleBack = () => {
-    navigate(-1);
-  };
+  }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-vt-maroon border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading alumni profile...</p>
-        </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CardContent className="pt-6 text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-vt-maroon mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading profile...</p>
+          </CardContent>
+        </Card>
       </div>
-    );
+    )
   }
 
-  if (!alumni) {
+  if (error || !profile) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <GraduationCap className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-600 mb-2">Alumni Not Found</h2>
-          <p className="text-gray-500 mb-4">The alumni profile you're looking for doesn't exist.</p>
-          <Button onClick={handleBack} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Go Back
-          </Button>
-        </div>
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Profile Not Found</CardTitle>
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-muted-foreground mb-4">{error || 'Profile not found'}</p>
+            <Button onClick={onClose} variant="outline">
+              Close
+            </Button>
+          </CardContent>
+        </Card>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Button 
-            onClick={handleBack}
-            variant="ghost"
-            className="mb-4 text-vt-maroon hover:text-vt-maroon-dark"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Matches
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="text-2xl text-vt-maroon">Alumni Profile</CardTitle>
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            <X className="h-4 w-4" />
           </Button>
-          
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={alumni.profilePicture} />
+        </CardHeader>
+        
+        <CardContent className="space-y-6">
+          {/* Profile Header */}
+          <div className="flex flex-col md:flex-row gap-6">
+            <div className="flex flex-col items-center">
+              <Avatar className="h-32 w-32 mb-4">
+                <AvatarImage src={profile.profilePicture} />
                 <AvatarFallback className="bg-vt-maroon text-white text-2xl">
-                  {alumni.name.split(' ').map(n => n[0]).join('')}
+                  {profile.name.split(' ').map(n => n[0]).join('')}
                 </AvatarFallback>
               </Avatar>
+            </div>
+            
+            <div className="flex-1 space-y-4">
               <div>
-                <h1 className="text-4xl font-bold text-vt-maroon mb-2">{alumni.name}</h1>
-                <div className="flex items-center gap-2 text-gray-600 mb-2">
-                  <GraduationCap className="h-5 w-5" />
-                  <span className="text-lg">{alumni.major}</span>
+                <h2 className="text-3xl font-bold text-vt-maroon mb-2">{profile.name}</h2>
+                <p className="text-lg text-muted-foreground">Virginia Tech Alumni</p>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">{profile.currentPosition}</p>
+                    <p className="text-sm text-muted-foreground">{profile.company}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600 mb-2">
-                  <Building className="h-5 w-5" />
-                  <span>{alumni.currentPosition} at {alumni.company}</span>
+                
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Location</p>
+                    <p className="text-sm text-muted-foreground">{profile.location}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="h-5 w-5" />
-                  <span>{alumni.location}</span>
+                
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Graduation Year</p>
+                    <p className="text-sm text-muted-foreground">Class of {profile.graduationYear}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Major(s)</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {profile.majors.map((major, index) => (
+                        <Badge key={index} variant="secondary" className="bg-vt-maroon/10 text-vt-maroon">
+                          {major}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="text-right">
-              {isStudent ? (
-                <div className="flex gap-3">
-                  <Button 
-                    onClick={handleConnect}
-                    variant="outline"
-                    className="px-6 py-3"
-                  >
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    Connect
-                  </Button>
-                  <Button 
-                    onClick={handleScheduleCall}
-                    className="bg-vt-maroon hover:bg-vt-maroon-dark text-white px-6 py-3"
-                  >
-                    <MessageCircle className="h-5 w-5 mr-2" />
-                    Request Call
-                  </Button>
+          </div>
+
+          {/* Contact Information */}
+          <div>
+            <h3 className="text-xl font-semibold text-vt-maroon mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {profile.contact.email && (
+                <div className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{profile.contact.email}</span>
                 </div>
-              ) : (
-                <Button 
-                  onClick={handleConnect}
-                  className="bg-vt-maroon hover:bg-vt-maroon-dark text-white px-6 py-3"
-                >
-                  <MessageCircle className="h-5 w-5 mr-2" />
-                  Connect
-                </Button>
+              )}
+              
+              {profile.contact.phone && (
+                <div className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">{profile.contact.phone}</span>
+                </div>
+              )}
+              
+              {profile.contact.linkedin && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  <a 
+                    href={`https://${profile.contact.linkedin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-vt-maroon hover:underline"
+                  >
+                    LinkedIn Profile
+                  </a>
+                </div>
+              )}
+              
+              {profile.contact.website && (
+                <div className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  <a 
+                    href={profile.contact.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-vt-maroon hover:underline"
+                  >
+                    Personal Website
+                  </a>
+                </div>
               )}
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* About */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-vt-maroon">About</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-700 leading-relaxed">
-                  {alumni.bio || `Meet ${alumni.name}, a ${alumni.major} graduate who has built a successful career in ${alumni.field}. With experience at ${alumni.company}, they bring valuable insights and expertise to help guide the next generation of Virginia Tech students.`}
+          {/* Professional Experience */}
+          <div>
+            <h3 className="text-xl font-semibold text-vt-maroon mb-4">Professional Experience</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-lg">{profile.currentPosition}</h4>
+                <p className="text-vt-maroon font-medium">{profile.company}</p>
+                <p className="text-sm text-muted-foreground">{profile.location}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Education */}
+          <div>
+            <h3 className="text-xl font-semibold text-vt-maroon mb-4">Education</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-semibold text-lg">Virginia Tech</h4>
+                <p className="text-vt-maroon font-medium">
+                  {profile.majors.join(', ')} • Class of {profile.graduationYear}
                 </p>
-              </CardContent>
-            </Card>
-
-            {/* Career Journey */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-vt-maroon">Career Journey</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-vt-orange/20 rounded-full flex items-center justify-center">
-                      <GraduationCap className="h-6 w-6 text-vt-orange" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">Virginia Tech</h3>
-                      <p className="text-gray-600">{alumni.major}</p>
-                      <p className="text-sm text-gray-500">{alumni.graduationYear ? `Class of ${alumni.graduationYear}` : 'Virginia Tech Graduate'}</p>
-                      {alumni.club && (
-                        <div className="mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {alumni.club}
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-gray-400">
-                    <div className="w-px h-8 bg-gray-300 ml-6"></div>
-                  </div>
-                  
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-vt-maroon/20 rounded-full flex items-center justify-center">
-                      <Briefcase className="h-6 w-6 text-vt-maroon" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">{alumni.company}</h3>
-                      <p className="text-gray-600">{alumni.currentPosition}</p>
-                      <p className="text-sm text-gray-500">{alumni.field}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Interests & Expertise */}
-            {alumni.interests && alumni.interests.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-xl text-vt-maroon">Interests & Expertise</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {alumni.interests.map((interest, index) => (
-                      <Badge key={index} variant="secondary" className="px-3 py-1">
-                        {interest}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Why Connect */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-vt-maroon">Why Connect?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <Star className="h-5 w-5 text-vt-orange mt-0.5" />
-                    <div>
-                      <h4 className="font-medium">Career Guidance</h4>
-                      <p className="text-sm text-gray-600">Get insights into the {alumni.field} industry and career progression</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <Users className="h-5 w-5 text-vt-orange mt-0.5" />
-                    <div>
-                      <h4 className="font-medium">Network Building</h4>
-                      <p className="text-sm text-gray-600">Connect with professionals in your field of interest</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <BookOpen className="h-5 w-5 text-vt-orange mt-0.5" />
-                    <div>
-                      <h4 className="font-medium">Academic Advice</h4>
-                      <p className="text-sm text-gray-600">Learn about relevant courses, projects, and opportunities</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-vt-maroon">Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Field</span>
-                  <Badge variant="outline">{alumni.field}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Company</span>
-                  <span className="text-sm font-medium">{alumni.company}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Location</span>
-                  <span className="text-sm font-medium">{alumni.location}</span>
-                </div>
-                {alumni.graduationYear && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Graduation</span>
-                    <span className="text-sm font-medium">{alumni.graduationYear}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Contact Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-vt-maroon">Get in Touch</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  onClick={handleConnect}
-                  className="w-full bg-vt-maroon hover:bg-vt-maroon-dark text-white"
-                >
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Send Connection Request
-                </Button>
-                {isStudent && (
-                  <Button 
-                    onClick={handleScheduleCall}
-                    variant="outline" 
-                    className="w-full"
-                  >
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Request a Call
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Similar Alumni */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg text-vt-maroon">Similar Alumni</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {(() => {
-                    // Get all alumni (static + dynamic) for similar alumni suggestions
-                    const allAlumni = [
-                      ...alumniData,
-                      ...alumniDataManager.getAllProfiles().map(dynamicAlumni => ({
-                        id: dynamicAlumni.id,
-                        name: dynamicAlumni.name,
-                        major: dynamicAlumni.majors.join(', '),
-                        field: dynamicAlumni.currentPosition || 'Professional',
-                        company: dynamicAlumni.company,
-                        profilePicture: dynamicAlumni.profilePicture
-                      }))
-                    ];
-                    
-                    return allAlumni
-                      .filter(a => a.id !== alumni.id && (a.major === alumni.major || a.field === alumni.field))
-                      .slice(0, 3)
-                      .map(similarAlumni => (
-                        <div 
-                          key={similarAlumni.id}
-                          className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                          onClick={() => navigate(`/alumni/${similarAlumni.id}`)}
-                        >
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={similarAlumni.profilePicture} />
-                            <AvatarFallback className="bg-vt-maroon text-white text-xs">
-                              {similarAlumni.name.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{similarAlumni.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{similarAlumni.company}</p>
-                          </div>
-                        </div>
-                      ));
-                  })()}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-6 border-t">
+            <Button 
+              onClick={onClose} 
+              variant="outline" 
+              className="flex-1"
+            >
+              Close
+            </Button>
+            <Button 
+              className="flex-1 bg-vt-maroon hover:bg-vt-maroon-light text-white"
+              onClick={() => {
+                // Here you could add logic to request a call or send a message
+                alert('This would initiate a connection request with the alumni.')
+              }}
+            >
+              Request Connection
+            </Button>
           </div>
-        </div>
-      </div>
-
-      {/* Request Call Modal */}
-      {alumni && (
-        <RequestCallModal
-          isOpen={showScheduleModal}
-          onClose={() => setShowScheduleModal(false)}
-          alumniId={alumni.id}
-          alumniName={alumni.name}
-          alumniCompany={alumni.company}
-        />
-      )}
+        </CardContent>
+      </Card>
     </div>
-  );
-};
+  )
+}
 
-export default AlumniProfileView;
+export default AlumniProfileView
